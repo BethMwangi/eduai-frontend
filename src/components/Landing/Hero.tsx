@@ -26,9 +26,9 @@ const Hero: React.FC<HeroSectionProps> = ({
       </div>
 
       {/* Section Hero */}
-      <section className="flex h-fit w-full flex-col py-[104px] md:py-[91px] lg:py-0 relative z-10">
+      <section className="flex h-fit w-full flex-col py-[140px] md:py-[130px] lg:py-[100px] relative z-10">
         {/* Wrapper */}
-        <div className="mx-auto flex h-fit w-full max-w-[1440px] flex-col items-center justify-center gap-12 px-3 md:gap-8 md:px-4 lg:flex-row lg:p-24">
+        <div className="mx-auto flex h-fit w-full flex-col items-center justify-center gap-12 px-6 md:gap-8 md:px-8 lg:flex-row lg:px-12">
           {/* Hero Message */}
           <div className="flex h-fit w-full flex-col justify-start gap-8 align-middle md:gap-16 lg:max-w-[488px]">
             {/* Text Content - Right above buttons */}
@@ -55,7 +55,7 @@ const Hero: React.FC<HeroSectionProps> = ({
                   "AI-powered assessment platform for students, helping you prepare, test and succeed."}
               </p>
             </div>
-            <div className="flex w-full max-w-[458px] gap-4 md:gap-8 lg:max-w-[383px]">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
               <Button variant="secondary" fullWidth className="flex-1">
                 Sign up &#39;— it&#39;s free
               </Button>

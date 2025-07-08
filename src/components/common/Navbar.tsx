@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Menu } from "lucide-react"; // optional: install lucide-react or use any icon
+import { Menu } from "lucide-react";
+import { Button } from "@/components/common/Button";
 
 const menuItems = [
   { title: "Products", href: "/products" },
@@ -17,7 +18,7 @@ export default function Navbar() {
 
   return (
     <header className="fixed top-0 z-50 w-full bg-white shadow">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 md:py-4">
+      <div className="mx-auto flex w-full items-center justify-between px-6 py-3 md:px-8 md:py-4 lg:px-12">
         {/* Left: Logo + Menu Icon (mobile) */}
         <div className="flex items-center gap-3">
           <button
@@ -47,22 +48,22 @@ export default function Navbar() {
 
         {/* Right: Auth Buttons */}
         <div className="hidden md:flex gap-3">
-          <Link href="/auth/login">
-            <button className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-2 px-4 rounded">
+          <Link href="/login">
+            <Button variant="outlined" fullWidth>
               Login
-            </button>
+            </Button>
           </Link>
-          <Link href="/auth/register">
-            <button className="bg-indigo-700 hover:bg-indigo-800 text-white font-medium py-2 px-4 rounded">
+          <Link href="/register">
+            <Button variant="primary" fullWidth>
               Sign Up
-            </button>
+            </Button>
           </Link>
         </div>
       </div>
 
       {/* Mobile dropdown menu */}
       {open && (
-        <div className="md:hidden bg-white border-t px-4 pb-4">
+        <div className="md:hidden bg-white border-t px-6 pb-4 md:px-8 lg:px-12">
           <nav className="flex flex-col gap-3">
             {menuItems.map((item) => (
               <Link
