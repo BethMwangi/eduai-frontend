@@ -6,12 +6,23 @@ export const userService = {
     return api.post<LoginResponse>("/auth/login/", { email, password });
   },
 
-  register(email: string, password: string, role: string) {
-    return api.post("/auth/register/", { email, password, role });
+  register(
+    email: string,
+    password: string,
+    role: string,
+    firstName?: string,
+    lastName?: string
+  ) {
+    return api.post("/auth/register/", {
+      email,
+      password,
+      role,
+      firstName,
+      lastName,
+    });
   },
 
   getProfile() {
     return api.get("/users/profile/");
   },
-
 };
