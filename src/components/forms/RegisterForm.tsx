@@ -1,8 +1,15 @@
 "use client";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/common/Button";
 import { userService } from "@/services/userService";
+
+interface RegisterErrorResponse {
+  email?: string[];
+  non_field_errors?: string[];
+  [key: string]: unknown;
+}
 
 export default function RegisterForm() {
   const router = useRouter();
@@ -21,9 +28,10 @@ export default function RegisterForm() {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
+
     try {
       await userService.register(
         form.email,
@@ -32,31 +40,34 @@ export default function RegisterForm() {
         form.firstName,
         form.lastName
       );
-      if (form.role === "teacher") {
-        router.push("/dashboard/teacher");
-      } else {
-        router.push("/dashboard/parent");
-      }
+
+      const destination =
+        form.role === "teacher" ? "/dashboard/teacher" : "/dashboard/parent";
+      router.push(destination);
     } catch (err: unknown) {
       if (
-        err &&
         typeof err === "object" &&
+        err !== null &&
         "response" in err &&
-        err.response &&
-        typeof err.response === "object" &&
-        "data" in err.response &&
-        err.response.data &&
-        typeof err.response.data === "object" &&
-        "message" in err.response.data
+        (err as { response?: unknown }).response &&
+        typeof (err as { response: unknown }).response === "object" &&
+        "data" in (err as { response: { data?: unknown } }).response
       ) {
-        setError(
-          (err.response as { data: { message?: string } }).data.message ||
-            "Registration failed"
-        );
+        const data = (err as {
+          response: { data: RegisterErrorResponse };
+        }).response.data;
+
+        if (data.email && Array.isArray(data.email)) {
+          setError(`Email: ${data.email[0]}`);
+        } else if (data.non_field_errors) {
+          setError(data.non_field_errors[0]);
+        } else {
+          setError("Registration failed. Please check your input.");
+        }
       } else if (err instanceof Error) {
-        setError(err.message || "Registration failed");
+        setError(err.message);
       } else {
-        setError("Registration failed");
+        setError("An unexpected error occurred.");
       }
     }
   };
@@ -85,23 +96,25 @@ export default function RegisterForm() {
       />
       <input
         name="email"
-        onChange={handleChange}
-        placeholder="Email"
         type="email"
+        placeholder="Email"
         required
+        value={form.email}
+        onChange={handleChange}
         className="w-full border p-2 rounded"
       />
       <input
         name="password"
-        onChange={handleChange}
-        placeholder="Password"
         type="password"
+        placeholder="Password"
         required
+        value={form.password}
+        onChange={handleChange}
         className="w-full border p-2 rounded"
       />
-
       <select
         name="role"
+        value={form.role}
         onChange={handleChange}
         className="w-full border p-2 rounded"
       >

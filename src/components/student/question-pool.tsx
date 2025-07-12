@@ -17,7 +17,6 @@ import {
   Target,
   FileText,
 } from "lucide-react"
-import DashboardLayout from "../dashboard/dashboard.layout"
 
 export default function QuestionPool() {
   const [viewMode, setViewMode] = useState<"list" | "cards">("list")
@@ -28,12 +27,6 @@ export default function QuestionPool() {
   const [searchQuery, setSearchQuery] = useState("")
   const [expandedSubjects, setExpandedSubjects] = useState<string[]>(["Mathematics"])
 
-  const user = {
-    name: "Alex Smith",
-    email: "alex.smith@email.com",
-    role: "student",
-    avatar: "AS",
-  }
 
   const subjects = ["Mathematics", "Physics", "Chemistry", "Biology", "English"]
   const difficulties = ["Easy", "Medium", "Hard"]
@@ -197,7 +190,7 @@ export default function QuestionPool() {
   }
 
   return (
-    <DashboardLayout user={user}>
+    <div>
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
@@ -219,12 +212,7 @@ export default function QuestionPool() {
                 <Grid3X3 className="w-4 h-4" />
               </button>
             </div>
-            <Link
-              href="/dashboard/student"
-              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-            >
-              Back to Dashboard
-            </Link>
+          
           </div>
         </div>
       </div>
@@ -556,6 +544,6 @@ export default function QuestionPool() {
           )}
         </div>
       </div>
-    </DashboardLayout>
+    </div>
   )
 }

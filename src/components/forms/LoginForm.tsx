@@ -1,54 +1,69 @@
-"use client";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/common/Button";
+"use client"
+
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { signIn } from "next-auth/react"
+import { Button } from "@/components/common/Button"
 
 export default function LoginForm() {
-  const router = useRouter();
-  const [form, setForm] = useState({ email: "", password: "" });
-  const [error, setError] = useState("");
+  const router = useRouter()
+  const [form, setForm] = useState({ email: "", password: "" })
+  const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
+    e.preventDefault()
+    setError("")
+    setLoading(true)
 
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
+      const res = await signIn("credentials", {
+        email: form.email,
+        password: form.password,
+        redirect: false,
+      })
 
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.message || "Login failed");
-
-      // ✅ Redirect based on role
-      if (data.user?.role === "teacher") {
-        router.push("/dashboard/teacher");
+      if (res?.error) {
+        setError("Invalid email or password")
       } else {
-        router.push("/dashboard/parent");
+        const role = await fetchUserRole()
+        console.log("User role after login:", role)
+        
+        if (role === "teacher") {
+          router.push("/dashboard/teacher")
+        } else if (role === "student") {
+          router.push("/dashboard/student")
+        } else if (role === "parent") {
+          router.push("/dashboard/parent")
+        } else {
+          setError("Unable to determine user role. Please try again.")
+        }
       }
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("An error occurred");
-      }
+    } catch (error) {
+      console.error("Login error:", error)
+      setError("An error occurred during login. Please try again.")
+    } finally {
+      setLoading(false)
     }
-  };
+  }
+
+  async function fetchUserRole(): Promise<string | null> {
+    try {
+      const res = await fetch("/api/auth/session")
+      const session = await res.json()
+      return session?.user?.role ?? null
+    } catch {
+      return null
+    }
+  }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="bg-white p-8 rounded shadow-md w-full max-w-md space-y-4"
-    >
+    <form onSubmit={handleSubmit} className="bg-white p-8 rounded shadow-md max-w-md space-y-4">
       <h2 className="text-xl font-semibold">Login</h2>
-
       {error && <p className="text-red-500">{error}</p>}
 
       <input
@@ -70,18 +85,9 @@ export default function LoginForm() {
         className="w-full border p-2 rounded"
       />
 
-      <Button type="submit" variant="primary" fullWidth>
-        Log In
+      <Button type="submit" variant="primary" fullWidth disabled={loading}>
+        {loading ? "Logging in..." : "Log In"}
       </Button>
-        <p className="text-center text-sm text-gray-600">
-        Not a member?{" "}
-        <span
-          onClick={() => router.push("/register")}
-          className="text-red-500 hover:underline cursor-pointer font-medium"
-        >
-          Start a 14 day free trial
-        </span>
-      </p>
     </form>
-  );
+  )
 }

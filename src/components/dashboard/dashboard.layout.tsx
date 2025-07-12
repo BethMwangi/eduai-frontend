@@ -1,24 +1,35 @@
-"use client"
+"use client";
 
-import type React from "react"
+import { useUser } from "@/hooks/userUser";
+import DashboardNavbar from "./dashboard-navbar";
+import type { ReactNode } from "react";
+import { Session } from "next-auth";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-import DashboardNavbar from "./dashboard-navbar"
+type User = Session["user"];
 
 interface DashboardLayoutProps {
-  children: React.ReactNode
-  user: {
-    name: string
-    email: string
-    role: string
-    avatar: string
-  }
+  children: (user: User) => ReactNode;
 }
 
-export default function DashboardLayout({ children, user }: DashboardLayoutProps) {
+export default function DashboardLayout({ children }: DashboardLayoutProps) {
+  const { user, loading } = useUser();
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace("/");
+    }
+  }, [loading, user, router]);
+
+  if (loading) return <div className="p-6">Loading...</div>;
+  if (!user) return null;
+
   return (
     <div className="min-h-screen bg-background">
       <DashboardNavbar user={user} />
-      <main className="flex-1">{children}</main>
+      <main className="flex-1">{children(user)}</main>
     </div>
-  )
+  );
 }

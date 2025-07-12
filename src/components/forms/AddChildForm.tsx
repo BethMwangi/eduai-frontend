@@ -1,26 +1,103 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/common/Button";
+import { userService } from "@/services/userService";
 
-export default function AddChildForm({ onBack }: { onBack: () => void }) {
+export default function AddChildForm({
+  onBack,
+  onChildAdded,
+}: {
+  onBack: () => void;
+  onChildAdded?: () => void;
+}) {
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
     dob: "",
+    level: "",
     grade: "",
     school: "",
     county: "",
+    password: "",
   });
+  const [grades, setGrades] = useState<{ id: number; name: string }[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [levels, setLevels] = useState<
+    { level: string; display_name: string }[]
+  >([]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  useEffect(() => {
+    userService.getLevels()
+      .then((res) => setLevels(res.data))
+      .catch((error) => {
+        console.error("Failed to load levels:", error);
+        setLevels([]);
+      });
+  }, []);
+
+  useEffect(() => {
+    if (form.level) {
+      userService
+        .getGradesByLevel(form.level)
+        .then((res) => setGrades(res.data))
+        .catch((error) => {
+          console.error("Failed to load grades:", error);
+          setGrades([]);
+        });
+    } else {
+      setGrades([]);
+    }
+    setForm((prev) => ({ ...prev, grade: "" }));
+  }, [form.level]);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+      ...(name === "level" ? { grade: "" } : {}),
+    }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Child submitted:", form);
+    setLoading(true);
+    setError("");
+    
+    // Validate password length
+    if (form.password.length < 6) {
+      setError("Password must be at least 6 characters long.");
+      setLoading(false);
+      return;
+    }
+    
+    try {
+      await userService.addChild({
+        first_name: form.firstName,
+        last_name: form.lastName,
+        date_of_birth: form.dob,
+        grade: Number(form.grade), 
+        school_name: form.school,
+        county: form.county,
+        password: form.password,
+      });
+      
+      // Call onChildAdded first to refresh the parent list
+      if (onChildAdded) {
+        onChildAdded();
+      }
+      
+      // Then close the form
+      onBack();
+    } catch {
+      setError("Failed to add child.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -57,24 +134,35 @@ export default function AddChildForm({ onBack }: { onBack: () => void }) {
         required
         className="w-full border border-gray-300 p-3 rounded"
       />
+      <select
+        name="level"
+        value={form.level}
+        onChange={handleChange}
+        required
+        className="w-full border border-gray-300 p-3 rounded bg-white"
+      >
+        <option value="">Select Level</option>
+        {levels.map((level) => (
+          <option key={level.level} value={level.level}>
+            {level.display_name}
+          </option>
+        ))}
+      </select>
 
       <select
         name="grade"
         value={form.grade}
         onChange={handleChange}
         required
+        disabled={!form.level}
         className="w-full border border-gray-300 p-3 rounded bg-white"
       >
         <option value="">Select Grade</option>
-        <option value="Grade 1">Grade 1 (Primary)</option>
-        <option value="Grade 2">Grade 2</option>
-        <option value="Grade 3">Grade 3</option>
-        <option value="Grade 4">Grade 4</option>
-        <option value="Grade 5">Grade 5</option>
-        <option value="Grade 6">Grade 6</option>
-        <option value="Grade 7">Grade 7 (Junior Secondary)</option>
-        <option value="Grade 8">Grade 8</option>
-        <option value="Grade 9">Grade 9</option>
+        {grades.map((grade) => (
+          <option key={grade.id} value={grade.id}>
+            {grade.name}
+          </option>
+        ))}
       </select>
 
       <input
@@ -91,10 +179,21 @@ export default function AddChildForm({ onBack }: { onBack: () => void }) {
         placeholder="County"
         className="w-full border border-gray-300 p-3 rounded"
       />
+      <input
+        name="password"
+        type="password"
+        value={form.password}
+        onChange={handleChange}
+        placeholder="Password for Child (minimum 6 characters)"
+        required
+        minLength={6}
+        className="w-full border border-gray-300 p-3 rounded"
+      />
+      {error && <p className="text-red-600 text-sm">{error}</p>}
 
       <div className="flex gap-4">
-        <Button type="submit" variant="primary">
-          Add Child
+        <Button type="submit" variant="primary" disabled={loading}>
+          {loading ? "Adding..." : "Add Child"}
         </Button>
         <Button type="button" variant="outlined" onClick={onBack}>
           Cancel

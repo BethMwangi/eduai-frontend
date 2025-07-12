@@ -1,62 +1,34 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
+import { useState } from "react";
+import Link from "next/link";
 import {
   BookOpen,
   TrendingUp,
   Award,
-  Clock,
   Target,
   BarChart3,
   Filter,
-  Calendar,
   CheckCircle,
-  ArrowRight,
   Play,
   Star,
-  Trophy,
   User,
-} from "lucide-react"
-import DashboardLayout from "./dashboard.layout"
+  ArrowLeft,
+} from "lucide-react";
+import DashboardLayout from "./dashboard.layout";
+import QuestionPool from "../student/question-pool";
+import { IconComponentCard } from "../cards/IconComponentCard";
 
 export default function StudentDashboard() {
-  const [selectedSubject, setSelectedSubject] = useState("all")
-
-  const user = {
-    name: "Alex Smith",
-    email: "alex.smith@email.com",
-    role: "student",
-    avatar: "AS",
-  }
-
-  const subjects = [
-    { name: "Mathematics", progress: 85, questionsAnswered: 245, color: "bg-primary", totalQuestions: 300 },
-    { name: "Physics", progress: 72, questionsAnswered: 189, color: "bg-accent", totalQuestions: 250 },
-    { name: "Chemistry", progress: 91, questionsAnswered: 312, color: "bg-secondary", totalQuestions: 350 },
-    { name: "Biology", progress: 68, questionsAnswered: 156, color: "bg-primary", totalQuestions: 200 },
-    { name: "English", progress: 79, questionsAnswered: 203, color: "bg-accent", totalQuestions: 280 },
-  ]
-
-  const recentActivity = [
-    { subject: "Mathematics", quiz: "Linear Algebra Basics", score: 92, date: "2 hours ago", questions: 25 },
-    { subject: "Physics", quiz: "Motion & Forces", score: 78, date: "1 day ago", questions: 30 },
-    { subject: "Chemistry", quiz: "Periodic Table", score: 95, date: "2 days ago", questions: 20 },
-  ]
-
-  const stats = {
-    totalQuestions: 1105,
-    correctAnswers: 887,
-    averageScore: 80,
-    streakDays: 12,
-  }
+  const [selectedSubject, setSelectedSubject] = useState("all");
+  const [view, setView] = useState<"dashboard" | "question-pool">("dashboard");
 
   const quickActions = [
     {
       title: "Browse Question Pool",
       description: "Access all available question papers for Grade 10",
       icon: BookOpen,
-      href: "/student/question-pool",
+      onClick: () => setView("question-pool"),
       color: "bg-primary",
       count: "150+ Papers",
       badge: "New papers added!",
@@ -79,9 +51,30 @@ export default function StudentDashboard() {
       count: "12 Earned",
       badge: "2 new badges!",
     },
+  ];
+
+
+  const recentActivity = [
+    { subject: "Mathematics", quiz: "Linear Algebra Basics", score: 92, date: "2 hours ago", questions: 25 },
+    { subject: "Physics", quiz: "Motion & Forces", score: 78, date: "1 day ago", questions: 30 },
+    { subject: "Chemistry", quiz: "Periodic Table", score: 95, date: "2 days ago", questions: 20 },
   ]
 
-  const upcomingTests = [
+    const stats = {
+    totalQuestions: 1105,
+    correctAnswers: 887,
+    averageScore: 80,
+    streakDays: 12,
+  }
+   const subjects = [
+    { name: "Mathematics", progress: 85, questionsAnswered: 245, color: "bg-primary", totalQuestions: 300 },
+    { name: "Physics", progress: 72, questionsAnswered: 189, color: "bg-accent", totalQuestions: 250 },
+    { name: "Chemistry", progress: 91, questionsAnswered: 312, color: "bg-secondary", totalQuestions: 350 },
+    { name: "Biology", progress: 68, questionsAnswered: 156, color: "bg-primary", totalQuestions: 200 },
+    { name: "English", progress: 79, questionsAnswered: 203, color: "bg-accent", totalQuestions: 280 },
+  ]
+
+   const upcomingTests = [
     { subject: "Mathematics", title: "Calculus Final", date: "Tomorrow", difficulty: "Hard" },
     { subject: "Physics", title: "Mechanics Quiz", date: "Dec 15", difficulty: "Medium" },
     { subject: "Chemistry", title: "Organic Chemistry", date: "Dec 18", difficulty: "Hard" },
@@ -95,168 +88,154 @@ export default function StudentDashboard() {
   ]
 
   return (
-    <DashboardLayout user={user}>
-      {/* Welcome Banner */}
-      <div className="bg-gradient-to-r from-primary/10 via-accent/5 to-secondary/10 border-b border-gray-200 px-6 py-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between">
+    <DashboardLayout>
+      {(layoutUser) => (
+        <div>
+          <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-text mb-2">Welcome back, {user.name}! ✨</h1>
-              <p className="text-gray-600 text-lg">Keep up the great work. You're doing amazing!</p>
-              <div className="flex items-center gap-4 mt-4">
-                <div className="flex items-center gap-2 px-3 py-1 bg-accent/10 rounded-full">
-                  <Target className="w-4 h-4 text-accent" />
-                  <span className="text-accent font-semibold text-sm">{stats.streakDays} day streak!</span>
-                </div>
-                <div className="flex items-center gap-2 px-3 py-1 bg-secondary/10 rounded-full">
-                  <Trophy className="w-4 h-4 text-secondary" />
-                  <span className="text-secondary font-semibold text-sm">Top 10% in class</span>
-                </div>
-              </div>
+              <h1 className="text-2xl font-bold text-text">
+                {view === "question-pool"
+                  ? "Question Pool"
+                  : "Student Dashboard"}
+              </h1>
+              <p className="text-gray-600">
+                {view === "question-pool"
+                  ? "Browse and attempt question papers by subject"
+                  : `Welcome back, ${layoutUser.first_name}!`}
+              </p>
             </div>
-            <div className="hidden md:block">
-              <img
-                src="/placeholder.svg?height=120&width=120"
-                alt="Student illustration"
-                className="w-32 h-32 object-contain"
-              />
-            </div>
+            {view === "question-pool" && (
+              <button
+                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                onClick={() => setView("dashboard")}
+              >
+                <ArrowLeft className="w-5 h-5" />
+                Back to Dashboard
+              </button>
+            )}
           </div>
-        </div>
-      </div>
 
-      <div className="flex">
-        {/* Enhanced Sidebar */}
-        <div className="w-64 bg-white border-r border-gray-200 min-h-[calc(100vh-64px)]">
-          <div className="p-6">
-            {/* User Profile Section */}
-            <div className="flex items-center gap-3 mb-8 p-4 bg-gradient-to-r from-primary/5 to-accent/5 rounded-xl">
-              <div className="w-12 h-12 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-lg">{user.avatar}</span>
-              </div>
-              <div>
-                <h3 className="font-semibold text-text">{user.name}</h3>
-                <p className="text-sm text-gray-500">Grade 10 Student</p>
-                <div className="flex items-center gap-1 mt-1">
-                  <Star className="w-3 h-3 text-secondary fill-current" />
-                  <span className="text-xs text-secondary font-medium">Level 5</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Navigation Menu */}
-            <nav className="space-y-2">
-              <Link
-                href="/dashboard/student"
-                className="flex items-center gap-3 px-4 py-3 bg-primary/10 text-primary rounded-lg font-medium"
-              >
-                <BarChart3 className="w-5 h-5" />
-                Dashboard
-              </Link>
-              <Link
-                href="/student/profile"
-                className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors group"
-              >
-                <User className="w-5 h-5 group-hover:text-primary transition-colors" />
-                Profile
-              </Link>
-              <Link
-                href="/student/question-pool"
-                className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors group"
-              >
-                <BookOpen className="w-5 h-5 group-hover:text-primary transition-colors" />
-                Question Pool
-                <span className="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">New</span>
-              </Link>
-              <Link
-                href="/student/achievements"
-                className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors group"
-              >
-                <Award className="w-5 h-5 group-hover:text-secondary transition-colors" />
-                Achievements
-                <span className="ml-auto bg-secondary text-white text-xs px-2 py-0.5 rounded-full">2</span>
-              </Link>
-              <Link
-                href="/student/history"
-                className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors group"
-              >
-                <Clock className="w-5 h-5 group-hover:text-accent transition-colors" />
-                Study History
-              </Link>
-              <Link
-                href="/student/schedule"
-                className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors group"
-              >
-                <Calendar className="w-5 h-5 group-hover:text-primary transition-colors" />
-                Schedule
-              </Link>
-            </nav>
-
-            {/* Quick Stats in Sidebar */}
-            <div className="mt-8 p-4 bg-gray-50 rounded-xl">
-              <h4 className="font-semibold text-text mb-3 text-sm">This Week</h4>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Questions Solved</span>
-                  <span className="font-semibold text-text">47</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Time Studied</span>
-                  <span className="font-semibold text-text">8.5h</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Avg Score</span>
-                  <span className="font-semibold text-accent">85%</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1 p-6 bg-gray-50">
-          {/* Quick Actions - Enhanced */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-text">Quick Actions</h2>
-              <Link href="/student/question-pool" className="text-primary hover:text-primary/80 text-sm font-medium">
-                View All →
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {quickActions.map((action) => {
-                const IconComponent = action.icon
-                return (
-                  <Link
-                    key={action.title}
-                    href={action.href}
-                    className="group bg-white rounded-xl border border-gray-200 p-6 hover:shadow-xl hover:border-primary/30 transition-all duration-300 transform hover:-translate-y-1"
-                  >
-                    <div className="flex items-center justify-between mb-4">
-                      <div
-                        className={`w-12 h-12 ${action.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg`}
-                      >
-                        <IconComponent className="w-6 h-6 text-white" />
-                      </div>
-                      <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-primary transition-colors" />
-                    </div>
-                    <h3 className="font-semibold text-text mb-2 group-hover:text-primary transition-colors">
-                      {action.title}
+          <div className="flex">
+            <div className="w-64 bg-white border-r border-gray-200 min-h-[calc(100vh-64px)]">
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-8 p-4 bg-gradient-to-r from-primary/5 to-accent/5 rounded-xl">
+                  <div className="w-12 h-12 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold text-lg">
+                      {(layoutUser.first_name[0] || "") +
+                        (layoutUser.last_name[0] || "")}
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-text">
+                      {layoutUser.first_name} {layoutUser.last_name}
                     </h3>
-                    <p className="text-sm text-gray-600 mb-3">{action.description}</p>
-                    <div className="flex items-center justify-between">
-                      <div className="text-xs font-medium text-gray-500">{action.count}</div>
-                      {action.badge && (
-                        <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full">{action.badge}</span>
-                      )}
+                    <p className="text-sm text-gray-500">Grade 10 Student</p>
+                    <div className="flex items-center gap-1 mt-1">
+                      <Star className="w-3 h-3 text-secondary fill-current" />
+                      <span className="text-xs text-secondary font-medium">
+                        Level 5
+                      </span>
                     </div>
-                  </Link>
-                )
-              })}
-            </div>
-          </div>
+                  </div>
+                </div>
 
-          {/* Stats Cards - Enhanced */}
+                <nav className="space-y-2">
+                  <button
+                    onClick={() => setView("dashboard")}
+                    className={`flex w-full items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left ${
+                      view === "dashboard"
+                        ? "bg-primary/10 text-primary font-medium"
+                        : "text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    <BarChart3 className="w-5 h-5" />
+                    Dashboard
+                  </button>
+
+                  <Link
+                    href="/student/profile"
+                    className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors group"
+                  >
+                    <User className="w-5 h-5 group-hover:text-primary transition-colors" />
+                    Profile
+                  </Link>
+
+                  <button
+                    onClick={() => setView("question-pool")}
+                    className={`flex w-full items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left ${
+                      view === "question-pool"
+                        ? "bg-primary/10 text-primary font-medium"
+                        : "text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    <BookOpen className="w-5 h-5 group-hover:text-primary transition-colors" />
+                    Question Pool
+                    <span className="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                      New
+                    </span>
+                  </button>
+
+                  <Link
+                    href="/student/achievements"
+                    className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors group"
+                  >
+                    <Award className="w-5 h-5 group-hover:text-secondary transition-colors" />
+                    Achievements
+                  </Link>
+                </nav>
+              </div>
+            </div>
+
+            <div className="flex-1 p-6 bg-gray-50">
+              {view === "question-pool" ? (
+                <QuestionPool />
+              ) : (
+                <>
+                  <div className="mb-8">
+                    <div className="flex items-center justify-between mb-6">
+                      <h2 className="text-xl font-semibold text-text">
+                        Quick Actions
+                      </h2>
+                      <button
+                        onClick={() => setView("question-pool")}
+                        className="text-primary hover:text-primary/80 text-sm font-medium"
+                      >
+                        View All →
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {quickActions.map((action) => {
+                        const IconComponent = action.icon;
+                        return action.href ? (
+                          <Link
+                            key={action.title}
+                            href={action.href}
+                            className="group bg-white rounded-xl border border-gray-200 p-6 hover:shadow-xl hover:border-primary/30 transition-all duration-300 transform hover:-translate-y-1"
+                          >
+                            <IconComponentCard
+                              action={action}
+                              IconComponent={IconComponent}
+                            />
+                          </Link>
+                        ) : (
+                          <button
+                            key={action.title}
+                            onClick={action.onClick}
+                            className="group w-full text-left bg-white rounded-xl border border-gray-200 p-6 hover:shadow-xl hover:border-primary/30 transition-all duration-300 transform hover:-translate-y-1"
+                          >
+                            <IconComponentCard
+                              action={action}
+                              IconComponent={IconComponent}
+                            />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  
+                  </div>
+
+                  {/* Stats Cards - Enhanced */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <div className="bg-white p-6 rounded-xl border border-gray-200 hover:shadow-lg transition-all duration-300 hover:border-primary/30">
               <div className="flex items-center justify-between">
@@ -470,9 +449,13 @@ export default function StudentDashboard() {
                 </Link>
               </div>
             </div>
+            </div>
+            </>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </DashboardLayout>
-  )
+  );
 }
