@@ -3,13 +3,29 @@
 import Link from "next/link";
 import { handleLogout } from "@/lib/logout";
 import { getDisplayName, getInitials } from "@/lib/utils";
-import { Props } from "@/types/auth";
+import { UserComponentProps } from "@/types/auth";
 import { Button } from "@/components/common/Button";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
-export default function DashboardNavbar({ user }: Props) {
-  const handleSignOut = async () => {
-    await handleLogout();
+
+export default function DashboardNavbar({ user }: UserComponentProps) {
+   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const router = useRouter();
+
+   const handleSignOut = () => {
+    setIsLoggingOut(true);
+    
+    document.body.classList.add("logging-out");
+
+    router.push("/");
+    
+    handleLogout().catch((error) => {
+      console.error("Error during sign out:", error);
+    });
   };
+
+
   const displayName = getDisplayName(user);
   const initials = getInitials(displayName);
 
@@ -47,6 +63,7 @@ export default function DashboardNavbar({ user }: Props) {
             <Button
               onClick={handleSignOut}
               variant="outlined"
+              disabled={isLoggingOut}
               className="flex items-center gap-2 px-4 py-2 text-red-600 border-red-200 hover:border-red-300"
             >
               <span>Sign Out</span>

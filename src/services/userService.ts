@@ -1,4 +1,4 @@
-import api from "./api";
+import api, { getApiUrl } from "./api";
 import type { LoginResponse } from "@/types/auth";
 
 export const userService = {
@@ -26,12 +26,23 @@ export const userService = {
     return api.get("/users/profile/");
   },
 
-  logout: async (refreshToken: string) => {
+  logout: async () => {
     try {
-      await api.post("/auth/logout/", { refresh_token: refreshToken });
+      const refreshToken = localStorage.getItem("refreshToken");
+
+      if (refreshToken) {
+        await api.post("/auth/logout/", { refresh_token: refreshToken });
+        localStorage.removeItem("refreshToken");
+      }
+
+      // Clear any other auth-related items from localStorage
+      localStorage.removeItem("user");
+      localStorage.removeItem("accessToken");
+
+      return true;
     } catch (error) {
-      // Continue with logout even if API call fails
       console.warn("API logout failed:", error);
+      return false;
     }
   },
 
@@ -79,5 +90,18 @@ export const userService = {
     }
   ) => {
     return api.put(`/users/children/${childId}/update/`, payload);
+  },
+
+  getGradeQuestions: (filters?: {
+    subject_id?: number;
+    difficulty?: "easy" | "medium" | "hard";
+    page?: number;
+  }) => {
+    const params: Record<string, string | number> = {};
+    if (filters?.subject_id) params.subject_id = filters.subject_id;
+    if (filters?.difficulty) params.difficulty = filters.difficulty;
+    if (filters?.page) params.page = filters.page;
+
+    return api.get(getApiUrl("/questions/questions/grade_questions/"), { params });
   },
 };

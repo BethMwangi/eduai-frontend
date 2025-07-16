@@ -4,8 +4,7 @@ import { useUser } from "@/hooks/userUser";
 import DashboardNavbar from "./dashboard-navbar";
 import type { ReactNode } from "react";
 import { Session } from "next-auth";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+
 
 type User = Session["user"];
 
@@ -15,13 +14,8 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, loading } = useUser();
-  const router = useRouter()
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.replace("/");
-    }
-  }, [loading, user, router]);
+
 
   if (loading) return <div className="p-6">Loading...</div>;
   if (!user) return null;

@@ -1,6 +1,23 @@
+
+import type { Session, User } from "next-auth";
+import type { JWT } from "next-auth/jwt";
+
+export type AuthUser = User;
+export type AuthSession = Session;
+export type AuthToken = JWT;
+
+
 export interface LoginResponse {
   access: string;
   refresh: string;
+  user: {
+    id: number | string;
+    email: string;
+    role: string;
+    first_name: string;
+    last_name: string;
+    full_name: string;
+  };
 }
 export interface HeroSectionProps {
   title: string;
@@ -9,7 +26,7 @@ export interface HeroSectionProps {
   alt: string;
 }
 
-export interface Props {
+export interface UserComponentProps {
   user: {
     id?: string;
     email?: string;
@@ -20,7 +37,6 @@ export interface Props {
     avatar?: string;
   };
 }
-
 export type Student = {
   id: number;
   full_name: string;
@@ -47,10 +63,15 @@ export type Student = {
 export interface CustomUser {
   id: string;
   email: string;
-  first_name?: string;
+  first_name: string;
   last_name?: string;
   full_name?: string;
   role: string;
   accessToken: string;
   refreshToken: string;
 }
+
+export type TokenResponse = {
+  access: string;
+  refresh?: string;
+};

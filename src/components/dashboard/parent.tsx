@@ -268,7 +268,7 @@ export default function ParentDashboard() {
                   {/* Overview + Activity */}
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {/* Family Progress Overview */}
-                    <div className="bg-white rounded-xl border border-gray-200 p-6">
+                    {/* <div className="bg-white rounded-xl border border-gray-200 p-6">
                       <h2 className="text-xl font-semibold text-text mb-6">
                         Family Progress Overview
                       </h2>
@@ -277,7 +277,7 @@ export default function ParentDashboard() {
                           <FamilyProgressCard key={child.id} child={child} />
                         ))}
                       </div>
-                    </div>
+                    </div> */}
 
                     {/* Recent Family Activity */}
                     <div className="bg-white rounded-xl border border-gray-200 p-6">

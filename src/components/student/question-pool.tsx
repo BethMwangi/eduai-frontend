@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Search,
   BookOpen,
@@ -11,16 +11,46 @@ import {
   FileText,
   Brain,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  ChevronLeft,
+  Loader,
 } from "lucide-react";
 import { PaperCard } from "../cards/PaperCard";
 import { QuestionCard } from "../cards/QuestionCard";
+import { userService } from "@/services/userService";
+
+type Subject = {
+  id: number;
+  name: string;
+  display_name: string;
+};
+
+type Grade = {
+  id: number;
+  name: string;
+  display_name: string;
+};
+
+type ApiQuestion = {
+  id: number;
+  question_text: string;
+  question_type: string;
+  options: Record<string, string>;
+  difficulty: "easy" | "medium" | "hard";
+  subject: Subject;
+  grade: Grade;
+};
+
+type ApiResponse = {
+  grade_info: Grade;
+  questions: ApiQuestion[]; // Changed from 'results' to 'questions' to match actual response
+};
 
 type ViewMode = "questions" | "papers";
 type LayoutMode = "list" | "grid";
 
 export default function QuestionPool() {
-  const [viewMode, setViewMode] = useState<ViewMode>("papers");
+  const [viewMode, setViewMode] = useState<ViewMode>("questions");
   const [layoutMode, setLayoutMode] = useState<LayoutMode>("list");
   const [selectedSubject, setSelectedSubject] = useState("all");
   const [selectedDifficulty, setSelectedDifficulty] = useState("all");
@@ -30,19 +60,87 @@ export default function QuestionPool() {
   const [expandedSubjects, setExpandedSubjects] = useState<string[]>([
     "Mathematics",
   ]);
-
   const [selectedTopic, setSelectedTopic] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const subjects = [
-    "Mathematics",
-    "Physics",
-    "Chemistry",
-    "Biology",
-    "English",
-  ];
+  const [apiQuestions, setApiQuestions] = useState<ApiQuestion[]>([]);
+  const [gradeInfo, setGradeInfo] = useState<Grade | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
+  const [nextPage, setNextPage] = useState<string | null>(null);
+  const [prevPage, setPrevPage] = useState<string | null>(null);
+  const [subjectsList, setSubjectsList] = useState<
+    { id: number; name: string }[]
+  >([]);
+
   const difficulties = ["Easy", "Medium", "Hard"];
   const years = ["2024", "2023", "2022", "2021", "2020"];
   const paperTypes = ["Mock Exam", "Main Exam", "Practice Test", "Topic Quiz"];
+
+
+
+  const fetchQuestions = async () => {
+    setLoading(true);
+    try {
+      const subjectId =
+        selectedSubject !== "all" ? parseInt(selectedSubject) : undefined;
+      const difficulty =
+        selectedDifficulty !== "all"
+          ? (selectedDifficulty.toLowerCase() as "easy" | "medium" | "hard")
+          : undefined;
+
+      const response = await userService.getGradeQuestions({
+        subject_id: subjectId,
+        difficulty: difficulty,
+        page: currentPage,
+      });
+
+    const data = response.data as ApiResponse;
+      setApiQuestions(data.questions || []); // Access the questions array
+      setGradeInfo(data.grade_info);
+      setTotalCount(data.questions?.length || 0);
+      setNextPage(null); // Update these based on your pagination implementation
+      setPrevPage(null);
+
+        if (data.questions && data.questions.length > 0) {
+      const uniqueSubjects = Array.from(
+        new Set(
+          data.questions.map((q) =>
+            JSON.stringify({ id: q.subject.id, name: q.subject.display_name })
+          )
+        )
+      ).map((s) => JSON.parse(s));
+
+      setSubjectsList(uniqueSubjects);
+    }
+  } catch (error) {
+    console.error("Error fetching questions:", error);
+    // Initialize with empty array to avoid the mapping error
+    setApiQuestions([]);
+  } finally {
+    setLoading(false);
+  }
+};
+
+  useEffect(() => {
+    fetchQuestions();
+  }, [selectedSubject, selectedDifficulty, currentPage]);
+
+
+   const questions = (apiQuestions || []).map((q) => ({
+  id: q.id,
+  question: q.question_text,
+  subject: q.subject.display_name,
+  topic: q.subject.name,
+  difficulty: q.difficulty.charAt(0).toUpperCase() + q.difficulty.slice(1),
+  type: "Multiple Choice",
+  options: Object.values(q.options),
+  correctAnswer: 0, // We don't get this from API for security reasons
+  attempts: 0,
+  tags: [q.subject.name],
+  estimatedTime: "3 mins",
+  points: 5,
+}));
 
   const questionPapers = [
     {
@@ -143,93 +241,6 @@ export default function QuestionPool() {
     },
   ];
 
-  // Mock questions data
-  const questions = [
-    {
-      id: 1,
-      question: "Find the derivative of f(x) = 3x² + 2x - 1",
-      subject: "Mathematics",
-      topic: "Calculus",
-      difficulty: "Medium",
-      type: "Multiple Choice",
-      options: ["6x + 2", "6x - 2", "3x + 2", "6x + 1"],
-      correctAnswer: 0,
-      explanation:
-        "Using the power rule: d/dx(3x²) = 6x, d/dx(2x) = 2, d/dx(-1) = 0",
-      attempts: 0,
-      tags: ["derivatives", "power rule", "polynomials"],
-      estimatedTime: "2 mins",
-      points: 5,
-    },
-    {
-      id: 2,
-      question: "What is Newton's Second Law of Motion?",
-      subject: "Physics",
-      topic: "Mechanics",
-      difficulty: "Easy",
-      type: "Multiple Choice",
-      options: ["F = ma", "F = mv", "F = ma²", "F = m/a"],
-      correctAnswer: 0,
-      explanation:
-        "Newton's Second Law states that Force equals mass times acceleration (F = ma)",
-      attempts: 1,
-      lastScore: 100,
-      tags: ["newton's laws", "force", "acceleration"],
-      estimatedTime: "1 min",
-      points: 3,
-    },
-    {
-      id: 3,
-      question: "Solve the quadratic equation: x² - 5x + 6 = 0",
-      subject: "Mathematics",
-      topic: "Algebra",
-      difficulty: "Medium",
-      type: "Multiple Choice",
-      options: ["x = 2, 3", "x = 1, 6", "x = -2, -3", "x = 2, -3"],
-      correctAnswer: 0,
-      explanation: "Factor: (x-2)(x-3) = 0, so x = 2 or x = 3",
-      attempts: 2,
-      lastScore: 80,
-      tags: ["quadratic", "factoring", "algebra"],
-      estimatedTime: "3 mins",
-      points: 4,
-    },
-    {
-      id: 4,
-      question: "What is the molecular formula for glucose?",
-      subject: "Chemistry",
-      topic: "Organic",
-      difficulty: "Easy",
-      type: "Multiple Choice",
-      options: ["C₆H₁₂O₆", "C₆H₆", "CH₄", "H₂O"],
-      correctAnswer: 0,
-      explanation:
-        "Glucose is a simple sugar with the molecular formula C₆H₁₂O₆",
-      attempts: 0,
-      tags: ["glucose", "molecular formula", "carbohydrates"],
-      estimatedTime: "1 min",
-      points: 2,
-    },
-    {
-      id: 5,
-      question: "Calculate the limit: lim(x→0) (sin x)/x",
-      subject: "Mathematics",
-      topic: "Calculus",
-      difficulty: "Hard",
-      type: "Multiple Choice",
-      options: ["1", "0", "∞", "undefined"],
-      correctAnswer: 0,
-      explanation:
-        "This is a standard limit that equals 1, often proven using L'Hôpital's rule or geometric arguments",
-      attempts: 0,
-      tags: ["limits", "trigonometry", "calculus"],
-      estimatedTime: "4 mins",
-      points: 8,
-    },
-  ];
-
-  
-
   const topics = {
     Mathematics: [
       "Algebra",
@@ -249,7 +260,6 @@ export default function QuestionPool() {
     Biology: ["Cell Biology", "Genetics", "Ecology", "Evolution", "Anatomy"],
     English: ["Grammar", "Literature", "Writing", "Reading Comprehension"],
   };
-
 
   const filteredPapers = questionPapers.filter((paper) => {
     return (
@@ -331,9 +341,21 @@ export default function QuestionPool() {
     );
   };
 
-  const getTopicsForSubject = () => {
-    if (selectedSubject === "all") return [];
-    return topics[selectedSubject as keyof typeof topics] || [];
+  // const getTopicsForSubject = () => {
+  //   if (selectedSubject === "all") return [];
+  //   return topics[selectedSubject as keyof typeof topics] || [];
+  // };
+
+  const handleNextPage = () => {
+    if (nextPage) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (prevPage && currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
   };
 
   return (
@@ -342,11 +364,13 @@ export default function QuestionPool() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-text">
-              Question Pool - Grade 10
+              Question Pool - {gradeInfo?.display_name}
             </h1>
             <p className="text-gray-600">
-              Browse and practice with {filteredPapers.length} available
-              question papers
+              Browse and practice with{" "}
+              {viewMode === "questions" ? totalCount : filteredPapers.length}{" "}
+              available
+              {viewMode === "questions" ? " questions" : " papers"}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -432,31 +456,30 @@ export default function QuestionPool() {
               <div className="space-y-2">
                 <button
                   onClick={() => {
-                    setSelectedSubject("Mathematics");
-                    setSelectedType("all");
+                    setSelectedSubject(subjectsList[0]?.id.toString() || "all");
                     setSelectedDifficulty("all");
                   }}
                   className="w-full text-left px-3 py-2 text-sm bg-primary/5 text-primary rounded-lg hover:bg-primary/10 transition-colors"
                 >
-                  📊 All Math Papers
+                  📊 All {subjectsList[0]?.name} Questions
                 </button>
                 <button
                   onClick={() => {
-                    setSelectedType("Mock Exam");
+                    setSelectedDifficulty("Easy");
                     setSelectedSubject("all");
                   }}
                   className="w-full text-left px-3 py-2 text-sm bg-secondary/5 text-secondary rounded-lg hover:bg-secondary/10 transition-colors"
                 >
-                  📝 Mock Exams Only
+                  🔰 Easy Questions Only
                 </button>
                 <button
                   onClick={() => {
-                    setSelectedYear("2024");
+                    setSelectedDifficulty("Hard");
                     setSelectedSubject("all");
                   }}
                   className="w-full text-left px-3 py-2 text-sm bg-accent/5 text-accent rounded-lg hover:bg-accent/10 transition-colors"
                 >
-                  📅 Latest Papers (2024)
+                  🔥 Hard Questions
                 </button>
               </div>
             </div>
@@ -472,9 +495,9 @@ export default function QuestionPool() {
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
               >
                 <option value="all">All Subjects</option>
-                {subjects.map((subject) => (
-                  <option key={subject} value={subject}>
-                    {subject}
+                {subjectsList.map((subject) => (
+                  <option key={subject.id} value={subject.id.toString()}>
+                    {subject.name}
                   </option>
                 ))}
               </select>
@@ -580,109 +603,159 @@ export default function QuestionPool() {
             </div>
           </div>
 
-          {viewMode === "questions" ? (
-  // Questions View
-  layoutMode === "list" ? (
-    <div className="space-y-4">
-      {filteredQuestions.map((question) => (
-        <QuestionCard
-          key={question.id}
-          question={question}
-          layoutMode="list"
-          getDifficultyColor={getDifficultyColor}
-        />
-      ))}
-    </div>
-  ) : (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-      {filteredQuestions.map((question) => (
-        <QuestionCard
-          key={question.id}
-          question={question}
-          layoutMode="grid"
-          getDifficultyColor={getDifficultyColor}
-        />
-      ))}
-    </div>
-  )
-) : (
-  // Papers View
-  layoutMode === "list" ? (
-    <div className="space-y-4">
-      {Object.entries(groupedPapers).map(([subject, topics]) => (
-        <div key={subject} className="bg-white rounded-lg border border-gray-200">
-          <button
-            onClick={() => toggleSubjectExpansion(subject)}
-            className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              {expandedSubjects.includes(subject) ? (
-                <ChevronDown className="w-5 h-5 text-gray-400" />
-              ) : (
-                <ChevronRight className="w-5 h-5 text-gray-400" />
-              )}
-              <h3 className="text-lg font-semibold text-text">{subject}</h3>
-              <span className="px-2 py-1 bg-primary/10 text-primary text-sm rounded-full">
-                {Object.values(topics).flat().length} papers
-              </span>
+          {loading ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <Loader className="w-10 h-10 text-primary animate-spin mx-auto mb-4" />
+                <p className="text-gray-500">Loading questions...</p>
+              </div>
             </div>
-          </button>
+          ) : viewMode === "questions" ? (
+            // Questions View
+            <>
+              {layoutMode === "list" ? (
+                <div className="space-y-4">
+                  {filteredQuestions.map((question) => (
+                    <QuestionCard
+                      key={question.id}
+                      question={question}
+                      layoutMode="list"
+                      getDifficultyColor={getDifficultyColor}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {filteredQuestions.map((question) => (
+                    <QuestionCard
+                      key={question.id}
+                      question={question}
+                      layoutMode="grid"
+                      getDifficultyColor={getDifficultyColor}
+                    />
+                  ))}
+                </div>
+              )}
 
-          {expandedSubjects.includes(subject) && (
-            <div className="border-t border-gray-100">
-              {Object.entries(topics).map(([topic, papers]) => (
-                <div key={topic} className="p-4 border-b border-gray-50 last:border-b-0">
-                  <h4 className="font-medium text-gray-800 mb-3 flex items-center gap-2">
-                    <BookOpen className="w-4 h-4" />
-                    {topic}
-                    <span className="text-xs text-gray-500">({papers.length} papers)</span>
-                  </h4>
-                  <div className="space-y-2">
-                    {papers.map((paper) => (
-                      <PaperCard
-                        key={paper.id}
-                        paper={paper}
-                        layoutMode="list"
-                        getDifficultyColor={getDifficultyColor}
-                        getTypeIcon={getTypeIcon}
-                      />
-                    ))}
-                  </div>
+              {/* Pagination */}
+              {(nextPage || prevPage) && (
+                <div className="flex justify-between mt-8 border-t pt-4 border-gray-200">
+                  <button
+                    onClick={handlePrevPage}
+                    disabled={!prevPage}
+                    className={`px-4 py-2 rounded flex items-center gap-2 ${
+                      !prevPage
+                        ? "text-gray-400"
+                        : "text-primary hover:bg-primary/5"
+                    }`}
+                  >
+                    <ChevronLeft className="w-4 h-4" /> Previous
+                  </button>
+                  <span className="text-sm text-gray-600 self-center">
+                    Page {currentPage} of{" "}
+                    {Math.ceil(totalCount / (apiQuestions.length || 1))}
+                  </span>
+                  <button
+                    onClick={handleNextPage}
+                    disabled={!nextPage}
+                    className={`px-4 py-2 rounded flex items-center gap-2 ${
+                      !nextPage
+                        ? "text-gray-400"
+                        : "text-primary hover:bg-primary/5"
+                    }`}
+                  >
+                    Next <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </>
+          ) : // Papers View
+          layoutMode === "list" ? (
+            <div className="space-y-4">
+              {Object.entries(groupedPapers).map(([subject, topics]) => (
+                <div
+                  key={subject}
+                  className="bg-white rounded-lg border border-gray-200"
+                >
+                  <button
+                    onClick={() => toggleSubjectExpansion(subject)}
+                    className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      {expandedSubjects.includes(subject) ? (
+                        <ChevronDown className="w-5 h-5 text-gray-400" />
+                      ) : (
+                        <ChevronRight className="w-5 h-5 text-gray-400" />
+                      )}
+                      <h3 className="text-lg font-semibold text-text">
+                        {subject}
+                      </h3>
+                      <span className="px-2 py-1 bg-primary/10 text-primary text-sm rounded-full">
+                        {Object.values(topics).flat().length} papers
+                      </span>
+                    </div>
+                  </button>
+
+                  {expandedSubjects.includes(subject) && (
+                    <div className="border-t border-gray-100">
+                      {Object.entries(topics).map(([topic, papers]) => (
+                        <div
+                          key={topic}
+                          className="p-4 border-b border-gray-50 last:border-b-0"
+                        >
+                          <h4 className="font-medium text-gray-800 mb-3 flex items-center gap-2">
+                            <BookOpen className="w-4 h-4" />
+                            {topic}
+                            <span className="text-xs text-gray-500">
+                              ({papers.length} papers)
+                            </span>
+                          </h4>
+                          <div className="space-y-2">
+                            {papers.map((paper) => (
+                              <PaperCard
+                                key={paper.id}
+                                paper={paper}
+                                layoutMode="list"
+                                getDifficultyColor={getDifficultyColor}
+                                getTypeIcon={getTypeIcon}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
-          )}
-        </div>
-      ))}
-    </div>
-  ) : (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-      {filteredPapers.map((paper) => (
-        <PaperCard
-          key={paper.id}
-          paper={paper}
-          layoutMode="grid"
-          getDifficultyColor={getDifficultyColor}
-          getTypeIcon={getTypeIcon}
-        />
-      ))}
-    </div>
-  )
-)}
-
-          {/* No Results Message */}
-          {((viewMode === "questions" && filteredQuestions.length === 0) ||
-            (viewMode === "papers" && filteredPapers.length === 0)) && (
-            <div className="text-center py-12">
-              <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-600 mb-2">
-                No {viewMode === "questions" ? "questions" : "papers"} found
-              </h3>
-              <p className="text-gray-500">
-                Try adjusting your filters to see more results.
-              </p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {filteredPapers.map((paper) => (
+                <PaperCard
+                  key={paper.id}
+                  paper={paper}
+                  layoutMode="grid"
+                  getDifficultyColor={getDifficultyColor}
+                  getTypeIcon={getTypeIcon}
+                />
+              ))}
             </div>
           )}
+
+          {/* No Results Message */}
+          {!loading &&
+            ((viewMode === "questions" && filteredQuestions.length === 0) ||
+              (viewMode === "papers" && filteredPapers.length === 0)) && (
+              <div className="text-center py-12">
+                <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-600 mb-2">
+                  No {viewMode === "questions" ? "questions" : "papers"} found
+                </h3>
+                <p className="text-gray-500">
+                  Try adjusting your filters to see more results.
+                </p>
+              </div>
+            )}
         </div>
       </div>
     </div>

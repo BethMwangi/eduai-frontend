@@ -1,12 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { signIn } from "next-auth/react"
+import { signIn, getSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/common/Button"
 
 export default function LoginForm() {
-  const router = useRouter()
+  const router = useRouter();
   const [form, setForm] = useState({ email: "", password: "" })
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
@@ -15,51 +15,54 @@ export default function LoginForm() {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-    setLoading(true)
 
-    try {
-      const res = await signIn("credentials", {
-        email: form.email,
-        password: form.password,
-        redirect: false,
-      })
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError("");
+  setLoading(true);
 
-      if (res?.error) {
-        setError("Invalid email or password")
-      } else {
-        const role = await fetchUserRole()
-        console.log("User role after login:", role)
-        
-        if (role === "teacher") {
-          router.push("/dashboard/teacher")
-        } else if (role === "student") {
-          router.push("/dashboard/student")
-        } else if (role === "parent") {
-          router.push("/dashboard/parent")
-        } else {
-          setError("Unable to determine user role. Please try again.")
-        }
-      }
-    } catch (error) {
-      console.error("Login error:", error)
-      setError("An error occurred during login. Please try again.")
-    } finally {
-      setLoading(false)
-    }
+  const res = await signIn("credentials", {
+    email: form.email,
+    password: form.password,
+    redirect: false,
+  });
+
+  if (res?.error) {
+    setError("Invalid email or password");
+    setLoading(false);
+    return;
+  }
+  const session = await waitForSession();
+
+  if (!session) {
+    setError("Login failed. Please try again.");
+    return;
   }
 
-  async function fetchUserRole(): Promise<string | null> {
-    try {
-      const res = await fetch("/api/auth/session")
-      const session = await res.json()
-      return session?.user?.role ?? null
-    } catch {
-      return null
-    }
+  const role = session.user?.role;
+  if (role === "parent") {
+    router.push("/dashboard/parent");
+  } else if (role === "student") {
+    router.push("/dashboard/student");
+  } else if (role === "teacher") {
+    router.push("/dashboard/teacher");
+  } else {
+    setError("Could not determine user role.");
   }
+
+  setLoading(false);
+};
+
+const waitForSession = async (retries = 5) => {
+  for (let i = 0; i < retries; i++) {
+    const session = await getSession();
+    if (session?.user?.role) return session;
+    await new Promise((res) => setTimeout(res, 300));
+  }
+  return null;
+};
+
+
 
   return (
     <form onSubmit={handleSubmit} className="bg-white p-8 rounded shadow-md max-w-md space-y-4">

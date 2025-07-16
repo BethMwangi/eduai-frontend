@@ -37,14 +37,14 @@ export function getInitials(displayName: string) {
     .slice(0, 2) || "U";
 }
 
-export const logoutWithBackend = async (refreshToken?: string) => {
-  try {
-    if (refreshToken) {
-      await userService.logout(refreshToken);
-    }
-  } catch (error) {
-    console.error("Failed to logout from backend:", error);
-  } finally {
-    await signOut({ callbackUrl: "/" });
-  }
-};
+// export const logoutWithBackend = async (refreshToken?: string) => {
+//   try {
+//     if (refreshToken) {
+//       await userService.logout(refreshToken);
+//     }
+//   } catch (error) {
+//     console.error("Failed to logout from backend:", error);
+//   } finally {
+//     await signOut({ callbackUrl: "/" });
+//   }
+// };

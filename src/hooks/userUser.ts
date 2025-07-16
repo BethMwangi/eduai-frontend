@@ -6,8 +6,7 @@ export function useUser() {
     const { data: session, status } = useSession()
     
     return {
-        user: session?.user || null,
+        user: session?.user,
         loading: status === "loading",
-        error: null,
     }
 }
