@@ -96,6 +96,7 @@ export interface UserComponentProps {
   user: User;
 }
 
+
 export interface ApiQuestionDetail {
   id: number;
   question_text: string;
