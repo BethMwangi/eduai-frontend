@@ -18,6 +18,13 @@ import {
 import { PaperCard } from "../cards/PaperCard";
 import { QuestionCard } from "../cards/QuestionCard";
 import { userService } from "@/services/userService";
+import { useAuth } from "@/context/auth";
+
+
+type GradeQuestionsResponse = {
+  grade_info: Grade;
+  questions: ApiQuestion[];
+};
 
 type Subject = {
   id: number;
@@ -41,15 +48,12 @@ type ApiQuestion = {
   grade: Grade;
 };
 
-type ApiResponse = {
-  grade_info: Grade;
-  questions: ApiQuestion[]; // Changed from 'results' to 'questions' to match actual response
-};
 
 type ViewMode = "questions" | "papers";
 type LayoutMode = "list" | "grid";
 
 export default function QuestionPool() {
+  const { getValidAccessToken } = useAuth();
   const [viewMode, setViewMode] = useState<ViewMode>("questions");
   const [layoutMode, setLayoutMode] = useState<LayoutMode>("list");
   const [selectedSubject, setSelectedSubject] = useState("all");
@@ -79,7 +83,7 @@ export default function QuestionPool() {
 
 
 
-  const fetchQuestions = async () => {
+const fetchQuestions = async () => {
     setLoading(true);
     try {
       const subjectId =
@@ -89,45 +93,50 @@ export default function QuestionPool() {
           ? (selectedDifficulty.toLowerCase() as "easy" | "medium" | "hard")
           : undefined;
 
-      const response = await userService.getGradeQuestions({
+      if (!getValidAccessToken) {
+        throw new Error("No token getter available");
+      }
+
+      const result = await userService.getGradeQuestions(getValidAccessToken, {
         subject_id: subjectId,
         difficulty: difficulty,
         page: currentPage,
       });
 
-    const data = response.data as ApiResponse;
-      setApiQuestions(data.questions || []); // Access the questions array
-      setGradeInfo(data.grade_info);
-      setTotalCount(data.questions?.length || 0);
-      setNextPage(null); // Update these based on your pagination implementation
+      const data = result as GradeQuestionsResponse;
+
+      setApiQuestions(data.questions || []);
+      setGradeInfo(data.grade_info ?? null);
+      setTotalCount(data.questions?.length ?? 0);
+
+      setNextPage(null);
       setPrevPage(null);
 
-        if (data.questions && data.questions.length > 0) {
-      const uniqueSubjects = Array.from(
-        new Set(
-          data.questions.map((q) =>
-            JSON.stringify({ id: q.subject.id, name: q.subject.display_name })
+      if (data.questions && data.questions.length > 0) {
+        const uniqueSubjects = Array.from(
+          new Set(
+            data.questions.map((q) =>
+              JSON.stringify({ id: q.subject.id, name: q.subject.display_name })
+            )
           )
-        )
-      ).map((s) => JSON.parse(s));
+        ).map((s) => JSON.parse(s));
 
-      setSubjectsList(uniqueSubjects);
+        setSubjectsList(uniqueSubjects);
+      }
+    } catch (error) {
+      console.error("Error fetching questions:", error);
+      setApiQuestions([]);
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching questions:", error);
-    // Initialize with empty array to avoid the mapping error
-    setApiQuestions([]);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
-  useEffect(() => {
-    fetchQuestions();
-  }, [selectedSubject, selectedDifficulty, currentPage]);
+useEffect(() => {
+  void fetchQuestions();
+}, [selectedSubject, selectedDifficulty, currentPage]);
 
 
-   const questions = (apiQuestions || []).map((q) => ({
+  const questions = (apiQuestions || []).map((q) => ({
   id: q.id,
   question: q.question_text,
   subject: q.subject.display_name,
@@ -241,25 +250,25 @@ export default function QuestionPool() {
     },
   ];
 
-  const topics = {
-    Mathematics: [
-      "Algebra",
-      "Calculus",
-      "Geometry",
-      "Statistics",
-      "Linear Algebra",
-    ],
-    Physics: [
-      "Mechanics",
-      "Thermodynamics",
-      "Electricity",
-      "Waves",
-      "Modern Physics",
-    ],
-    Chemistry: ["Organic", "Inorganic", "Physical", "Analytical"],
-    Biology: ["Cell Biology", "Genetics", "Ecology", "Evolution", "Anatomy"],
-    English: ["Grammar", "Literature", "Writing", "Reading Comprehension"],
-  };
+  // const topics = {
+  //   Mathematics: [
+  //     "Algebra",
+  //     "Calculus",
+  //     "Geometry",
+  //     "Statistics",
+  //     "Linear Algebra",
+  //   ],
+  //   Physics: [
+  //     "Mechanics",
+  //     "Thermodynamics",
+  //     "Electricity",
+  //     "Waves",
+  //     "Modern Physics",
+  //   ],
+  //   Chemistry: ["Organic", "Inorganic", "Physical", "Analytical"],
+  //   Biology: ["Cell Biology", "Genetics", "Ecology", "Evolution", "Anatomy"],
+  //   English: ["Grammar", "Literature", "Writing", "Reading Comprehension"],
+  // };
 
   const filteredPapers = questionPapers.filter((paper) => {
     return (

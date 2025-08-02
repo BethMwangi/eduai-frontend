@@ -96,6 +96,35 @@ export interface UserComponentProps {
   user: User;
 }
 
+export interface ApiQuestionDetail {
+  id: number;
+  question_text: string;
+  question_type: string; 
+  options: Record<string, string>;
+  difficulty: "easy" | "medium" | "hard";
+  subject: {
+    id: number;
+    name: string;
+    display_name: string;
+  };
+  grade: {
+    id: number;
+    name: string;
+    display_name: string;
+  };
+  correct_answer_index?: number;
+  explanation?: string;
+  detailed_explanation?: string;
+  tips?: string[];
+  related_concepts?: string[];
+  estimated_time?: string;
+  points?: number;
+  attempts_count?: number;
+  tags?: string[];
+}
+
+
+
 export function mapJwtToUser(payload: JwtPayload): User | null {
   if (!payload.email || !payload.role) return null;
   const first_name = payload.first_name || "";

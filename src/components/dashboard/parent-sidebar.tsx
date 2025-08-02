@@ -14,7 +14,7 @@ export default function ParentSidebar({ user, activePage = 'dashboard' }: Parent
     <div className="w-64 bg-white border-r border-gray-200 min-h-[calc(100vh-64px)]">
       <div className="p-6">
         <div className="flex items-center gap-3 mb-8">
-          <div className="w-12 h-12 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center">
+          <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center">
             <span className="text-white font-bold text-lg">
               {user?.first_name?.[0] || user?.avatar || 'U'}
             </span>

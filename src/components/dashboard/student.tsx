@@ -7,17 +7,15 @@ import {
   TrendingUp,
   Award,
   Target,
-  BarChart3,
   Filter,
   CheckCircle,
   Play,
-  Star,
-  User,
   ArrowLeft,
 } from "lucide-react";
 import DashboardLayout from "./dashboard.layout";
 import QuestionPool from "../student/question-pool";
 import { IconComponentCard } from "../cards/IconComponentCard";
+import StudentSidebar from "./student-sidebar"; 
 
 export default function StudentDashboard() {
   const [selectedSubject, setSelectedSubject] = useState("all");
@@ -198,60 +196,11 @@ export default function StudentDashboard() {
           </div>
 
           <div className="flex">
-            <div className="w-64 bg-white border-r border-gray-200 min-h-[calc(100vh-64px)]">
-              <div className="p-6">
-                <div className="flex items-center gap-3 mb-8 p-4 bg-gradient-to-r from-primary/5 to-accent/5 rounded-xl">
-                  <div className="w-12 h-12 bg-gradient-to-r bg-red-500  rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold text-lg">
-                      {(layoutUser.first_name[0] || "") +
-                        (layoutUser.last_name[0] || "")}
-                    </span>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-text">
-                      {layoutUser.first_name} {layoutUser.last_name}
-                    </h3>
-                    <p className="text-sm text-gray-500">Grade 10 Student</p>
-                    <div className="flex items-center gap-1 mt-1">
-                      <Star className="w-3 h-3 text-secondary fill-current" />
-                      <span className="text-xs text-secondary font-medium">
-                        Level 5
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <nav className="space-y-2">
-                  <button
-                    onClick={() => setView("dashboard")}
-                    className={`flex w-full items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left ${
-                      view === "dashboard"
-                        ? "bg-primary/10 text-primary font-medium"
-                        : "text-gray-600 hover:bg-gray-50"
-                    }`}
-                  >
-                    <BarChart3 className="w-5 h-5" />
-                    Dashboard
-                  </button>
-
-                  <Link
-                    href="/student/profile"
-                    className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors group"
-                  >
-                    <User className="w-5 h-5 group-hover:text-primary transition-colors" />
-                    Profile
-                  </Link>
-
-                  <Link
-                    href="/student/achievements"
-                    className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors group"
-                  >
-                    <Award className="w-5 h-5 group-hover:text-secondary transition-colors" />
-                    Achievements
-                  </Link>
-                </nav>
-              </div>
-            </div>
+             <StudentSidebar
+            user={layoutUser}
+            activePage={view === "question-pool" ? "question-pool" : "dashboard"}
+            onViewChange={(v) => setView(v)}
+          />
 
             <div className="flex-1 p-6 bg-gray-50">
               {view === "question-pool" ? (

@@ -1,6 +1,6 @@
 // src/services/userService.ts
 import { authFetch } from "@/lib/authFetch";
-import type { Student, User } from "@/types/auth";
+import type { Student, User , ApiQuestionDetail} from "@/types/auth";
 import type { ApiResponse } from "@/types/api";
 import { unwrapApi } from "@/types/api";
 
@@ -140,15 +140,14 @@ export const userService = {
     );
   },
 
-  getQuestionById: (
-    getValidAccessToken: () => Promise<string | null>,
-    questionId: number
-  ) =>
-    fetchAndUnwrap<unknown>(
-      `/questions/questions/${questionId}/`,
-      getValidAccessToken
-    ),
-
+getQuestionById: (
+  getValidAccessToken: () => Promise<string | null>,
+  questionId: number
+) =>
+  fetchAndUnwrap<ApiQuestionDetail>(
+    `/questions/questions/${questionId}/`,
+    getValidAccessToken
+  ),
   recordQuestionAttempt: (
     getValidAccessToken: () => Promise<string | null>,
     data: {
