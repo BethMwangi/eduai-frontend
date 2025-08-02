@@ -1,42 +1,37 @@
+// src/types/auth.ts
+export type UserRole = "student" | "parent" | "teacher";
 
-import type { Session, User } from "next-auth";
-import type { JWT } from "next-auth/jwt";
-
-export type AuthUser = User;
-export type AuthSession = Session;
-export type AuthToken = JWT;
-
-
-export interface LoginResponse {
-  access: string;
-  refresh: string;
-  user: {
-    id: number | string;
-    email: string;
-    role: string;
-    first_name: string;
-    last_name: string;
-    full_name: string;
-  };
-}
-export interface HeroSectionProps {
-  title: string;
-  description: string;
-  imageUrl: string;
-  alt: string;
+export interface User {
+  id: string | number;
+  email: string;
+  role: UserRole;
+  first_name: string;
+  last_name: string;
+  full_name?: string;
+  avatar?: string; // optional, for future profile pictures
 }
 
-export interface UserComponentProps {
-  user: {
-    id?: string;
-    email?: string;
-    first_name?: string;
-    last_name?: string;
-    full_name?: string;
-    role?: string;
-    avatar?: string;
-  };
+/** Payload inside the JWT. */
+export interface JwtPayload {
+  exp?: number;
+  iat?: number;
+  user_id?: string | number;
+  email?: string;
+  role?: UserRole;
+  first_name?: string;
+  last_name?: string;
+  full_name?: string;
 }
+
+/** Options used to register a user. */
+export interface RegisterOptions {
+  email: string;
+  password: string;
+  role: UserRole;
+  first_name?: string;
+  last_name?: string;
+}
+
 export type Student = {
   id: number;
   full_name: string;
@@ -59,19 +54,75 @@ export type Student = {
   total_questions_attempted: number;
   total_correct_answers: number;
 };
-
-export interface CustomUser {
-  id: string;
-  email: string;
-  first_name: string;
-  last_name?: string;
-  full_name?: string;
-  role: string;
-  accessToken: string;
-  refreshToken: string;
+/** Response from login endpoint. */
+export interface LoginResponse {
+  access: string;
+  refresh: string;
+  user: User;
 }
 
-export type TokenResponse = {
-  access: string;
-  refresh?: string;
-};
+export interface RegisterOptions {
+  email: string;
+  password: string;
+  role: UserRole;
+  first_name?: string;
+  last_name?: string;
+}
+
+/** Request bodies for auth endpoints (frontend-side). */
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  role: UserRole;
+  firstName?: string;
+  lastName?: string;
+}
+/** Contract for the auth context. */
+export interface AuthContextType {
+  accessToken: string | null;
+  user: User | null;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<User>;
+  register: (opts: RegisterOptions) => Promise<void>;
+  logout: () => Promise<void>;
+  getValidAccessToken: () => Promise<string | null>;
+}
+
+export interface UserComponentProps {
+  user: User;
+}
+
+export function mapJwtToUser(payload: JwtPayload): User | null {
+  if (!payload.email || !payload.role) return null;
+  const first_name = payload.first_name || "";
+  const last_name = payload.last_name || "";
+  const full_name = payload.full_name || `${first_name} ${last_name}`.trim() || undefined;
+
+  return {
+    id: payload.user_id ?? "",
+    email: payload.email,
+    role: payload.role,
+    first_name,
+    last_name,
+    full_name,
+  };
+}
+
+/** Basic runtime type guard for User-like objects. */
+export function isUser(value: unknown): value is User {
+  if (typeof value !== "object" || value === null) return false;
+  const obj = value as Record<string, unknown>;
+  return (
+    (typeof obj.id === "string" || typeof obj.id === "number") &&
+    typeof obj.email === "string" &&
+    typeof obj.role === "string" &&
+    typeof obj.first_name === "string" &&
+    typeof obj.last_name === "string"
+  );
+}
+
+

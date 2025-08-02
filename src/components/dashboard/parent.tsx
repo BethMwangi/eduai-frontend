@@ -1,26 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import {
-  Users,
-  Plus,
-  TrendingUp,
-  BookOpen,
-  Settings,
-  Calendar,
-  BarChart3,
-  ArrowLeft,
-} from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Plus, BookOpen, ArrowLeft } from "lucide-react";
 import DashboardLayout from "./dashboard.layout";
 import AddChildForm from "@/components/forms/AddChildForm";
 import { userService } from "@/services/userService";
 import { Student } from "@/types/auth";
 import ChildDetailView from "./child-detail-view";
 import ChildCard from "@/components/cards/ChildCard";
-import FamilyProgressCard from "../cards/FamilyProgressCard";
+import ParentSidebar from "./parent-sidebar";
+import { useAuth } from "@/context/auth";
 
 export default function ParentDashboard() {
+ const { getValidAccessToken, user: layoutUser, loading: authLoading } =
+    useAuth();
   const [showAddChild, setShowAddChild] = useState(false);
   const [loading, setLoading] = useState(false);
   const [student, setStudent] = useState<Student[]>([]);
@@ -28,37 +21,47 @@ export default function ParentDashboard() {
   const [loadingChildDetail, setLoadingChildDetail] = useState(false);
   const [selectedChild, setSelectedChild] = useState<number | null>(null);
 
-  const fetchChildren = async () => {
+  const fetchChildren = useCallback(async () => {
+    if (!layoutUser) return; 
     setLoading(true);
     try {
-      const res = await userService.getChildren();
-      setStudent(res.data || []);
+      const list = await userService.getChildren(getValidAccessToken);
+      setStudent(Array.isArray(list) ? list : []);
     } catch (error) {
       console.error("Failed to fetch children:", error);
       setStudent([]);
-      // Don't redirect here - let the auth interceptor handle it
     } finally {
       setLoading(false);
     }
-  };
+  }, [getValidAccessToken]);
 
   useEffect(() => {
-    fetchChildren();
-  }, []);
+    if (authLoading) return;
+    if (!layoutUser) return;
+    void fetchChildren();
+  }, [fetchChildren, authLoading, layoutUser]);
 
-  const handleViewChild = async (childId: number) => {
-    setLoadingChildDetail(true);
-    try {
-      const res = await userService.getChildDetail(childId);
-      setChildDetail(res.data);
+  const handleViewChild = useCallback(
+    async (childId: number) => {
       setSelectedChild(childId);
-    } catch (error) {
-      console.error("Failed to fetch child detail:", error);
-      setChildDetail(null);
-    } finally {
-      setLoadingChildDetail(false);
-    }
-  };
+      setLoadingChildDetail(true);
+      try {
+        const detail = await userService.getChildDetail(
+          getValidAccessToken,
+          childId
+        );
+        setChildDetail(detail);
+      } catch (error) {
+        console.error("Failed to fetch child detail:", error);
+        setChildDetail(null);
+        setSelectedChild(null); // rollback selection on error
+      } finally {
+        setLoadingChildDetail(false);
+      }
+    },
+    [getValidAccessToken]
+  );
+
   const recentActivity = [
     {
       child: "Alex",
@@ -137,107 +140,76 @@ export default function ParentDashboard() {
 
           <div className="flex">
             {/* Sidebar */}
-            <div className="w-64 bg-white border-r border-gray-200 min-h-[calc(100vh-64px)]">
-              <div className="p-6">
-                <div className="flex items-center gap-3 mb-8">
-                  <div className="w-12 h-12 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold text-lg">
-                      {/* {layoutUser.avatar} */}
-                    </span>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-text">
-                      {layoutUser.first_name}
-                    </h3>
-                    <p className="text-sm text-gray-500">Parent Account</p>
-                  </div>
-                </div>
-
-                <nav className="space-y-2">
-                  <Link
-                    href="#"
-                    className="flex items-center gap-3 px-4 py-3 bg-primary/10 text-primary rounded-lg font-medium"
-                  >
-                    <BarChart3 className="w-5 h-5" />
-                    Dashboard
-                  </Link>
-                  <Link
-                    href="#"
-                    className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg"
-                  >
-                    <Users className="w-5 h-5" />
-                    My Children
-                  </Link>
-                  <Link
-                    href="#"
-                    className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg"
-                  >
-                    <TrendingUp className="w-5 h-5" />
-                    Progress Reports
-                  </Link>
-                  <Link
-                    href="#"
-                    className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg"
-                  >
-                    <Calendar className="w-5 h-5" />
-                    Study Schedule
-                  </Link>
-                  <Link
-                    href="#"
-                    className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg"
-                  >
-                    <Settings className="w-5 h-5" />
-                    Settings
-                  </Link>
-                </nav>
-              </div>
-            </div>
+            <ParentSidebar user={layoutUser} activePage="dashboard" />
 
             {/* Main Content */}
             <div className="flex-1 p-6">
-              {selectedChild && childDetail ? (
-                <ChildDetailView
-                  child={{
-                    id: childDetail.id,
-                    name: childDetail.full_name,
-                    firstName: childDetail.first_name,
-                    lastName: childDetail.last_name,
-                    age: childDetail.age,
-                    grade: `${childDetail.grade} (${childDetail.grade_name})`,
-                    school: childDetail.school_name,
-                    avatar: `${childDetail.first_name[0]}${childDetail.last_name[0]}`,
-                    totalQuestions: childDetail.total_questions_attempted,
-                    correctAnswers: childDetail.total_correct_answers,
-                    averageScore: childDetail.overall_average_score,
-                    streakDays: childDetail.current_streak_days,
-                    subjects: childDetail.total_subjects,
-                    lastActive: childDetail.last_activity_date
-                      ? new Date(
-                          childDetail.last_activity_date
-                        ).toLocaleDateString()
-                      : "N/A",
-                    dateOfBirth: childDetail.date_of_birth,
-                    parentEmail: "",
-                    email: childDetail.email,
-                    weakSubjects: [],
-                    strongSubjects: [],
-                    recentTests: [],
-                    monthlyProgress: [],
-                    studyTime: { daily: 0, weekly: 0, monthly: 0 },
-                    achievements: [],
-                  }}
-                  onBack={() => {
-                    setSelectedChild(null);
-                    setChildDetail(null);
-                  }}
-                />
+              {selectedChild ? (
+                loadingChildDetail ? (
+                  // show loader while fetching child detail
+                  <div className="flex justify-center items-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                  </div>
+                ) : childDetail ? (
+                  <ChildDetailView
+                    child={{
+                      id: childDetail.id,
+                      name: childDetail.full_name,
+                      firstName: childDetail.first_name,
+                      lastName: childDetail.last_name,
+                      age: childDetail.age,
+                      grade: `${childDetail.grade} (${childDetail.grade_name})`,
+                      school: childDetail.school_name,
+                      avatar: `${childDetail.first_name[0]}${childDetail.last_name[0]}`,
+                      totalQuestions:
+                        childDetail.total_questions_attempted,
+                      correctAnswers:
+                        childDetail.total_correct_answers,
+                      averageScore:
+                        childDetail.overall_average_score,
+                      streakDays: childDetail.current_streak_days,
+                      subjects: childDetail.total_subjects,
+                      lastActive: childDetail.last_activity_date
+                        ? new Date(
+                            childDetail.last_activity_date
+                          ).toLocaleDateString()
+                        : "N/A",
+                      dateOfBirth: childDetail.date_of_birth,
+                      parentEmail: "",
+                      email: childDetail.email,
+                      weakSubjects: [],
+                      strongSubjects: [],
+                      recentTests: [],
+                      monthlyProgress: [],
+                      studyTime: { daily: 0, weekly: 0, monthly: 0 },
+                      achievements: [],
+                    }}
+                    onBack={() => {
+                      setSelectedChild(null);
+                      setChildDetail(null);
+                    }}
+                  />
+                ) : (
+                  // selectedChild but failed to load detail
+                  <div className="text-center py-12">
+                    <p className="text-red-500">Failed to load child details.</p>
+                    <button
+                      className="mt-4 px-4 py-2 bg-primary text-white rounded"
+                      onClick={() => {
+                        if (selectedChild) handleViewChild(selectedChild);
+                      }}
+                    >
+                      Retry
+                    </button>
+                  </div>
+                )
               ) : showAddChild ? (
-                <AddChildForm 
-                  onBack={() => setShowAddChild(false)} 
+                <AddChildForm
+                  onBack={() => setShowAddChild(false)}
                   onChildAdded={() => {
                     fetchChildren(); // Refresh the children list
                     setShowAddChild(false); // Close the form
-                  }} 
+                  }}
                 />
               ) : (
                 <>
@@ -248,7 +220,9 @@ export default function ParentDashboard() {
                     </div>
                   ) : student.length === 0 ? (
                     <div className="text-center py-12">
-                      <p className="text-gray-500 text-lg">No children found</p>
+                      <p className="text-gray-500 text-lg">
+                        No children found
+                      </p>
                       <p className="text-gray-400 text-sm">
                         Click &quot;Add Child&quot; to get started
                       </p>
@@ -265,21 +239,8 @@ export default function ParentDashboard() {
                     </div>
                   )}
 
-                  {/* Overview + Activity */}
+                  {/* Recent Family Activity */}
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Family Progress Overview */}
-                    {/* <div className="bg-white rounded-xl border border-gray-200 p-6">
-                      <h2 className="text-xl font-semibold text-text mb-6">
-                        Family Progress Overview
-                      </h2>
-                      <div className="space-y-6">
-                        {student.map((child) => (
-                          <FamilyProgressCard key={child.id} child={child} />
-                        ))}
-                      </div>
-                    </div> */}
-
-                    {/* Recent Family Activity */}
                     <div className="bg-white rounded-xl border border-gray-200 p-6">
                       <h2 className="text-xl font-semibold text-text mb-6">
                         Recent Family Activity

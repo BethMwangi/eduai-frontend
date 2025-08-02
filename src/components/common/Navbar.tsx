@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/common/Button";
+import Image from "next/image";
 
 const menuItems = [
   { title: "Products", href: "/products" },
@@ -28,8 +29,18 @@ export default function Navbar() {
           >
             <Menu size={24} />
           </button>
-          <Link href="/" className="text-xl font-semibold text-indigo-700">
-            EduAI
+            <Link href="/" className="flex items-center">
+            <Image
+              src="/logo.png" 
+              alt="StudyPool Logo"
+              width={100}
+              height={1000}
+              className="mr-2"
+            />
+            <div className="flex items-center">
+              <span className="font-bold text-[#182b5c] text-2xl">STUDY</span>
+              <span className="font-bold text-[#ff914d] text-2xl">pool</span>
+            </div>
           </Link>
         </div>
 

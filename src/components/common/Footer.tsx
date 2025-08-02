@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Footer() {
   return (
@@ -8,10 +9,23 @@ export default function Footer() {
           {/* Company Info & Mission */}
           <div className="lg:col-span-1">
             <div className="flex items-center mb-6">
-              <div className="w-10 h-10 bg-gradient-to-r from-primary to-accent rounded-lg flex items-center justify-center mr-3">
-                <span className="text-lg font-bold text-white">AI</span>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900">Assessment</h3>
+              <Link href="/" className="flex items-center">
+                <Image
+                  src="/logo.png"
+                  alt="StudyPool Logo"
+                  width={100}
+                  height={1000}
+                  className="mr-2"
+                />
+                <div className="flex items-center">
+                  <span className="font-bold text-[#182b5c] text-2xl">
+                    STUDY
+                  </span>
+                  <span className="font-bold text-[#ff914d] text-2xl">
+                    pool
+                  </span>
+                </div>
+              </Link>
             </div>
 
             <p className="text-gray-600 mb-8 leading-relaxed">
@@ -202,7 +216,7 @@ export default function Footer() {
         <div className="border-t border-gray-200 mt-12 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-500 text-sm">
-              © 2024 AI Assessment Platform. All rights reserved.
+              © 2024 STUDY Pool Platform. All rights reserved.
             </p>
 
             <div className="flex space-x-6 mt-4 md:mt-0">

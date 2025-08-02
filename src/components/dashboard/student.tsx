@@ -14,7 +14,6 @@ import {
   Star,
   User,
   ArrowLeft,
-  ArrowRight,
 } from "lucide-react";
 import DashboardLayout from "./dashboard.layout";
 import QuestionPool from "../student/question-pool";
@@ -202,7 +201,7 @@ export default function StudentDashboard() {
             <div className="w-64 bg-white border-r border-gray-200 min-h-[calc(100vh-64px)]">
               <div className="p-6">
                 <div className="flex items-center gap-3 mb-8 p-4 bg-gradient-to-r from-primary/5 to-accent/5 rounded-xl">
-                  <div className="w-12 h-12 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center">
+                  <div className="w-12 h-12 bg-gradient-to-r bg-red-500  rounded-full flex items-center justify-center">
                     <span className="text-white font-bold text-lg">
                       {(layoutUser.first_name[0] || "") +
                         (layoutUser.last_name[0] || "")}

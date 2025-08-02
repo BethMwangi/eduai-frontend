@@ -13,8 +13,10 @@ import {
   RotateCcw,
   BookOpen,
   Target,
+  Loader,
 } from "lucide-react"
 import DashboardLayout from "../dashboard/dashboard.layout";
+import { userService } from "@/services/userService";
 
 interface QuestionPracticeProps {
   questionId: string
@@ -27,49 +29,82 @@ export default function QuestionPractice({ questionId }: QuestionPracticeProps) 
   const [showTips, setShowTips] = useState(false)
   const [timeSpent, setTimeSpent] = useState(0)
   const [startTime] = useState(Date.now())
-
-  const user = {
-    name: "Alex Smith",
-    email: "alex.smith@email.com",
-    role: "student",
-    avatar: "AS",
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+  interface Question {
+    id: number;
+    question_text: string;
+    subject?: { display_name: string };
+    topic?: { display_name: string };
+    difficulty: string;
+    question_type: string;
+    options?: { [key: string]: string };
+    correct_answer_index?: number;
+    explanation?: string;
+    detailed_explanation?: string;
+    tips?: string[];
+    related_concepts?: string[];
+    estimated_time?: string;
+    points?: number;
+    attempts_count?: number;
+    tags?: string[];
   }
+  
+    const [question, setQuestion] = useState<Question | null>(null)
+
 
   // Mock question data - in real app, fetch based on questionId
-  const question = {
-    id: Number.parseInt(questionId),
-    question: "Find the derivative of f(x) = 3x² + 2x - 1",
-    subject: "Mathematics",
-    topic: "Calculus",
-    difficulty: "Medium",
-    type: "Multiple Choice",
-    options: ["6x + 2", "6x - 2", "3x + 2", "6x + 1"],
-    correctAnswer: 0,
-    explanation: "Using the power rule: d/dx(3x²) = 6x, d/dx(2x) = 2, d/dx(-1) = 0. Therefore, f'(x) = 6x + 2.",
-    detailedExplanation: `
-      To find the derivative of f(x) = 3x² + 2x - 1, we apply the power rule to each term:
+  // const question = {
+  //   id: Number.parseInt(questionId),
+  //   question: "Find the derivative of f(x) = 3x² + 2x - 1",
+  //   subject: "Mathematics",
+  //   topic: "Calculus",
+  //   difficulty: "Medium",
+  //   type: "Multiple Choice",
+  //   options: ["6x + 2", "6x - 2", "3x + 2", "6x + 1"],
+  //   correctAnswer: 0,
+  //   explanation: "Using the power rule: d/dx(3x²) = 6x, d/dx(2x) = 2, d/dx(-1) = 0. Therefore, f'(x) = 6x + 2.",
+  //   detailedExplanation: `
+  //     To find the derivative of f(x) = 3x² + 2x - 1, we apply the power rule to each term:
       
-      1. For 3x²: The power rule states that d/dx(x^n) = nx^(n-1)
-         So d/dx(3x²) = 3 × 2x^(2-1) = 6x
+  //     1. For 3x²: The power rule states that d/dx(x^n) = nx^(n-1)
+  //        So d/dx(3x²) = 3 × 2x^(2-1) = 6x
       
-      2. For 2x: d/dx(2x) = 2 × 1 = 2
+  //     2. For 2x: d/dx(2x) = 2 × 1 = 2
       
-      3. For -1: The derivative of a constant is 0
+  //     3. For -1: The derivative of a constant is 0
       
-      Therefore: f'(x) = 6x + 2 + 0 = 6x + 2
-    `,
-    tips: [
-      "Remember the power rule: d/dx(x^n) = nx^(n-1)",
-      "The derivative of a constant is always 0",
-      "When differentiating, handle each term separately",
-      "Don't forget to multiply by the coefficient",
-    ],
-    relatedConcepts: ["Power Rule", "Polynomial Derivatives", "Basic Differentiation"],
-    estimatedTime: "2 mins",
-    points: 5,
-    attempts: 0,
-    tags: ["derivatives", "power rule", "polynomials"],
-  }
+  //     Therefore: f'(x) = 6x + 2 + 0 = 6x + 2
+  //   `,
+  //   tips: [
+  //     "Remember the power rule: d/dx(x^n) = nx^(n-1)",
+  //     "The derivative of a constant is always 0",
+  //     "When differentiating, handle each term separately",
+  //     "Don't forget to multiply by the coefficient",
+  //   ],
+  //   relatedConcepts: ["Power Rule", "Polynomial Derivatives", "Basic Differentiation"],
+  //   estimatedTime: "2 mins",
+  //   points: 5,
+  //   attempts: 0,
+  //   tags: ["derivatives", "power rule", "polynomials"],
+  // }
+
+    useEffect(() => {
+    async function fetchQuestion() {
+      try {
+        setLoading(true);
+        const response = await userService.getQuestionById(Number(questionId));
+        setQuestion(response.data);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching question:", err);
+        setError("Failed to load the question. Please try again.");
+        setLoading(false);
+      }
+    }
+
+    fetchQuestion();
+  }, [questionId]);
 
   // Timer effect
   useEffect(() => {
@@ -80,21 +115,52 @@ export default function QuestionPractice({ questionId }: QuestionPracticeProps) 
     return () => clearInterval(interval)
   }, [startTime])
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (selectedAnswer !== null) {
       setIsSubmitted(true)
       setShowExplanation(true)
+
+      try {
+        // Record the attempt in the API
+        await userService.recordQuestionAttempt({
+          question_id: Number(questionId),
+          selected_option: String.fromCharCode(65 + selectedAnswer), // Convert to A, B, C, etc.
+          confidence: "medium", // You could add a confidence selector to the UI
+          self_explanation: "", // Could be added as a text input in the UI
+          asked_ai_help: showTips, // Track if user used the tips feature
+        });
+      } catch (err) {
+        console.error("Error recording attempt:", err);
+        // Consider showing an error message to the user
+      }
     }
   }
-
   const handleReset = () => {
     setSelectedAnswer(null)
     setIsSubmitted(false)
     setShowExplanation(false)
     setShowTips(false)
   }
+  const questionData = {
+    id: question.id,
+    question: question.question_text,
+    subject: question.subject?.display_name || "Subject",
+    topic: question.topic?.display_name || "Topic",
+    difficulty: question.difficulty,
+    type: question.question_type === "mcq" ? "Multiple Choice" : question.question_type,
+    options: Object.values(question.options || {}),
+    correctAnswer: question.correct_answer_index || 0,
+    explanation: question.explanation || "No explanation provided.",
+    detailedExplanation: question.detailed_explanation || "No detailed explanation available.",
+    tips: question.tips || [],
+    relatedConcepts: question.related_concepts || [],
+    estimatedTime: question.estimated_time || "2 mins",
+    points: question.points || 5,
+    attempts: question.attempts_count || 0,
+    tags: question.tags || [],
+  };
+ const isCorrect = selectedAnswer === questionData.correctAnswer
 
-  const isCorrect = selectedAnswer === question.correctAnswer
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
@@ -113,9 +179,41 @@ export default function QuestionPractice({ questionId }: QuestionPracticeProps) 
         return "bg-gray-100 text-gray-600"
     }
   }
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-96">
+          <div className="flex flex-col items-center">
+            <Loader className="w-12 h-12 text-primary animate-spin mb-4" />
+            <p className="text-gray-600">Loading question...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (error || !question) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-96">
+          <div className="bg-red-50 p-6 rounded-lg border border-red-200 max-w-lg">
+            <h2 className="text-red-700 font-semibold text-xl mb-2">Error</h2>
+            <p className="text-red-600">{error || "Question not found"}</p>
+            <Link
+              href="/student/questions"
+              className="mt-4 inline-block px-4 py-2 bg-primary text-white rounded-lg"
+            >
+              Back to Questions
+            </Link>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+ 
 
   return (
-    <DashboardLayout user={user}>
+    <DashboardLayout>
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center gap-4">
           <Link
@@ -130,15 +228,15 @@ export default function QuestionPractice({ questionId }: QuestionPracticeProps) 
             <div>
               <h1 className="text-xl font-bold text-text">Question Practice</h1>
               <p className="text-gray-600">
-                {question.subject} • {question.topic}
+                {questionData.subject} • {questionData.topic}
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <span className={`px-3 py-1 text-sm rounded-full ${getDifficultyColor(question.difficulty)}`}>
-                {question.difficulty}
+              <span className={`px-3 py-1 text-sm rounded-full ${getDifficultyColor(questionData.difficulty)}`}>
+                {questionData.difficulty}
               </span>
               <span className="px-3 py-1 bg-primary/10 text-primary text-sm rounded-full">
-                {question.points} points
+                {questionData.points} points
               </span>
             </div>
           </div>
@@ -179,7 +277,7 @@ export default function QuestionPractice({ questionId }: QuestionPracticeProps) 
                 </div>
               </div>
 
-              <h2 className="text-xl font-semibold text-text mb-6">{question.question}</h2>
+              <h2 className="text-xl font-semibold text-text mb-6">{questionData.question}</h2>
 
               {/* Answer Options */}
               <div className="space-y-3 mb-6">
@@ -191,11 +289,11 @@ export default function QuestionPractice({ questionId }: QuestionPracticeProps) 
                     className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
                       selectedAnswer === index
                         ? isSubmitted
-                          ? index === question.correctAnswer
+                          ? index === questionData.correctAnswer
                             ? "border-green-500 bg-green-50"
                             : "border-red-500 bg-red-50"
                           : "border-primary bg-primary/5"
-                        : isSubmitted && index === question.correctAnswer
+                        : isSubmitted && index === questionData.correctAnswer
                           ? "border-green-500 bg-green-50"
                           : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                     } ${isSubmitted ? "cursor-not-allowed" : "cursor-pointer"}`}
@@ -206,7 +304,7 @@ export default function QuestionPractice({ questionId }: QuestionPracticeProps) 
                       </span>
                       {isSubmitted && (
                         <div>
-                          {index === question.correctAnswer ? (
+                          {index === questionData.correctAnswer ? (
                             <CheckCircle className="w-5 h-5 text-green-500" />
                           ) : selectedAnswer === index ? (
                             <XCircle className="w-5 h-5 text-red-500" />
@@ -246,12 +344,12 @@ export default function QuestionPractice({ questionId }: QuestionPracticeProps) 
                     <span className="text-sm text-gray-600">Time: {formatTime(timeSpent)}</span>
                   </div>
                   {isCorrect && (
-                    <p className="text-green-700 text-sm">Great job! You earned {question.points} points.</p>
+                    <p className="text-green-700 text-sm">Great job! You earned {questionData.points} points.</p>
                   )}
                   {!isCorrect && (
                     <p className="text-red-700 text-sm">
-                      The correct answer is {String.fromCharCode(65 + question.correctAnswer)}:{" "}
-                      {question.options[question.correctAnswer]}
+                      The correct answer is {String.fromCharCode(65 + questionData.correctAnswer)}:{" "}
+                      {questionData.options[questionData.correctAnswer]}
                     </p>
                   )}
                 </div>
@@ -271,10 +369,10 @@ export default function QuestionPractice({ questionId }: QuestionPracticeProps) 
                   </button>
                 </div>
                 <div className="prose prose-sm max-w-none">
-                  <p className="text-gray-700 mb-4">{question.explanation}</p>
+                  <p className="text-gray-700 mb-4">{questionData.explanation}</p>
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <h4 className="font-medium text-gray-800 mb-2">Detailed Solution:</h4>
-                    <pre className="whitespace-pre-wrap text-sm text-gray-700">{question.detailedExplanation}</pre>
+                    <pre className="whitespace-pre-wrap text-sm text-gray-700">{questionData.detailedExplanation}</pre>
                   </div>
                 </div>
               </div>
@@ -288,7 +386,7 @@ export default function QuestionPractice({ questionId }: QuestionPracticeProps) 
                   Study Tips
                 </h3>
                 <ul className="space-y-2">
-                  {question.tips.map((tip, index) => (
+                  {questionData.tips.map((tip, index) => (
                     <li key={index} className="flex items-start gap-2 text-yellow-700">
                       <span className="w-2 h-2 bg-yellow-400 rounded-full mt-2 flex-shrink-0" />
                       {tip}
@@ -298,7 +396,7 @@ export default function QuestionPractice({ questionId }: QuestionPracticeProps) 
                 <div className="mt-4 pt-4 border-t border-yellow-200">
                   <h4 className="font-medium text-yellow-800 mb-2">Related Concepts:</h4>
                   <div className="flex flex-wrap gap-2">
-                    {question.relatedConcepts.map((concept) => (
+                    {questionData.relatedConcepts.map((concept) => (
                       <span key={concept} className="px-2 py-1 bg-yellow-100 text-yellow-700 text-sm rounded">
                         {concept}
                       </span>
@@ -317,25 +415,25 @@ export default function QuestionPractice({ questionId }: QuestionPracticeProps) 
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-gray-500">Subject:</span>
-                  <span className="font-medium text-text">{question.subject}</span>
+                  <span className="font-medium text-text">{questionData.subject}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Topic:</span>
-                  <span className="font-medium text-text">{question.topic}</span>
+                  <span className="font-medium text-text">{questionData.topic}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Difficulty:</span>
-                  <span className={`px-2 py-1 text-xs rounded-full ${getDifficultyColor(question.difficulty)}`}>
-                    {question.difficulty}
+                  <span className={`px-2 py-1 text-xs rounded-full ${getDifficultyColor(questionData.difficulty)}`}>
+                    {questionData.difficulty}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Est. Time:</span>
-                  <span className="font-medium text-text">{question.estimatedTime}</span>
+                  <span className="font-medium text-text">{questionData.estimatedTime}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Points:</span>
-                  <span className="font-medium text-text">{question.points}</span>
+                  <span className="font-medium text-text">{questionData.points}</span>
                 </div>
               </div>
             </div>
@@ -350,7 +448,7 @@ export default function QuestionPractice({ questionId }: QuestionPracticeProps) 
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Attempts:</span>
-                  <span className="font-medium text-text">{question.attempts + 1}</span>
+                  <span className="font-medium text-text">{questionData.attempts + 1}</span>
                 </div>
                 {isSubmitted && (
                   <div className="flex justify-between">
@@ -395,7 +493,7 @@ export default function QuestionPractice({ questionId }: QuestionPracticeProps) 
             <div className="bg-white rounded-xl border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-text mb-4">Tags</h3>
               <div className="flex flex-wrap gap-2">
-                {question.tags.map((tag) => (
+                {questionData.tags.map((tag) => (
                   <span key={tag} className="px-2 py-1 bg-gray-50 text-gray-600 text-sm rounded">
                     #{tag}
                   </span>

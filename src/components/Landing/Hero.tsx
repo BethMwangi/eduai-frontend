@@ -2,6 +2,7 @@ import type React from "react";
 import Image from "next/image";
 import type { HeroSectionProps } from "@/types/auth";
 import { Button } from "@/components/common/Button";
+import Link from "next/link";
 
 const Hero: React.FC<HeroSectionProps> = ({
   title,
@@ -11,8 +12,7 @@ const Hero: React.FC<HeroSectionProps> = ({
 }) => {
   return (
     /* Content */
-    <div className="flex w-full flex-col justify-start rounded bg-gradient-to-b from-[#F9FAFB] to-[#EDF0F3] align-middle shadow-[0_1px_2px_rgba(0,0,0,0.05)] md:rounded-md md:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)] lg:py-[9px] lg:shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1),0_4px_6px_-2px_rgba(0,0,0,0.05)] relative overflow-hidden min-h-[600px]">
-      {/* Background Image */}
+    <div className="flex w-full flex-col justify-start rounded bg-gradient-to-b from-[#F9FAFB] to-[#EDF0F3] align-middle shadow-[0_1px_2px_rgba(0,0,0,0.05)] md:rounded-md md:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)] lg:py-[9px] lg:shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1),0_4px_6px_-2px_rgba(0,0,0,0.05)] relative overflow-hidden min-h-[400px]">
       <div className="absolute inset-0 z-0">
         <Image
           src={imageUrl || "/placeholder.svg"}
@@ -56,9 +56,11 @@ const Hero: React.FC<HeroSectionProps> = ({
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <Button variant="secondary" fullWidth className="flex-1">
-                Sign up &#39;— it&#39;s free
-              </Button>
+              <Link href="/register">
+                <Button variant="secondary" fullWidth className="flex-1">
+                  Sign up &#39;— it&#39;s free
+                </Button>
+              </Link>
               <Button variant="primary" fullWidth className="flex-1">
                 Learn More
               </Button>
@@ -66,7 +68,7 @@ const Hero: React.FC<HeroSectionProps> = ({
           </div>
 
           {/* Spacer to maintain layout balance */}
-          <div className="relative h-[264px] w-[319px] md:h-[526px] md:w-[704px] lg:w-[696px] opacity-0">
+          <div className="relative h-[200px] w-[340px] md:h-[546px] md:w-[704px] lg:w-[696px] opacity-0">
             {/* This invisible div maintains the original layout spacing */}
           </div>
         </div>

@@ -1,5 +1,4 @@
-import { signOut } from "next-auth/react";
-import { userService } from "@/services/userService";
+
 
 export function cn(...classes: (string | undefined | null | false)[]) {
   return classes.filter(Boolean).join(" ");
@@ -36,15 +35,3 @@ export function getInitials(displayName: string) {
     .toUpperCase()
     .slice(0, 2) || "U";
 }
-
-// export const logoutWithBackend = async (refreshToken?: string) => {
-//   try {
-//     if (refreshToken) {
-//       await userService.logout(refreshToken);
-//     }
-//   } catch (error) {
-//     console.error("Failed to logout from backend:", error);
-//   } finally {
-//     await signOut({ callbackUrl: "/" });
-//   }
-// };

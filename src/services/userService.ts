@@ -1,84 +1,105 @@
-import api, { getApiUrl } from "./api";
-import type { LoginResponse } from "@/types/auth";
+// src/services/userService.ts
+import { authFetch } from "@/lib/authFetch";
+import type { Student, User } from "@/types/auth";
+import type { ApiResponse } from "@/types/api";
+import { unwrapApi } from "@/types/api";
+
+
+/**
+ * Helper that fetches and unwraps potential ApiResponse<T> wrappers.
+ */
+async function fetchAndUnwrap<T>(
+  path: string,
+  getValidAccessToken: () => Promise<string | null>,
+  opts: RequestInit = {}
+): Promise<T> {
+  const result = await authFetch<T | ApiResponse<T>>(path, opts, getValidAccessToken);
+  return unwrapApi(result);
+}
 
 export const userService = {
-  login(email: string, password: string) {
-    return api.post<LoginResponse>("/auth/login/", { email, password });
-  },
 
-  register(
+   register: async (
     email: string,
     password: string,
     role: string,
     firstName?: string,
     lastName?: string
-  ) {
-    return api.post("/auth/register/", {
-      email,
-      password,
-      role,
-      firstName,
-      lastName,
+  ) => {
+    const res = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email,
+        password,
+        role,
+        first_name: firstName, 
+        last_name: lastName,
+      }),
     });
-  },
 
-  getProfile: () => {
-    return api.get("/users/profile/");
-  },
-
-  logout: async () => {
-    try {
-      const refreshToken = localStorage.getItem("refreshToken");
-
-      if (refreshToken) {
-        await api.post("/auth/logout/", { refresh_token: refreshToken });
-        localStorage.removeItem("refreshToken");
-      }
-
-      // Clear any other auth-related items from localStorage
-      localStorage.removeItem("user");
-      localStorage.removeItem("accessToken");
-
-      return true;
-    } catch (error) {
-      console.warn("API logout failed:", error);
-      return false;
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const message = (data && (data.error || data.detail)) || "Registration failed";
+      const err: Error & { data?: unknown } = new Error(message);
+      err.data = data;
+      throw err;
     }
+    return data; 
   },
+  getProfile: (getValidAccessToken: () => Promise<string | null>) =>
+    fetchAndUnwrap<User>("/users/profile/", getValidAccessToken),
 
-  addChild: (payload: {
-    first_name: string;
-    last_name: string;
-    date_of_birth: string;
-    grade: number;
-    school_name: string;
-    county: string;
-    password: string;
-  }) => {
-    return api.post("/users/add-child/", payload);
-  },
+  addChild: (
+    getValidAccessToken: () => Promise<string | null>,
+    payload: {
+      first_name: string;
+      last_name: string;
+      date_of_birth: string;
+      grade: number;
+      school_name: string;
+      county: string;
+      password: string;
+    }
+  ) =>
+    fetchAndUnwrap<Student>(
+      "/users/add-child/",
+      getValidAccessToken,
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }
+    ),
 
-  getGrades: () => {
-    return api.get("/academics/grades/");
-  },
+  getGrades: (getValidAccessToken: () => Promise<string | null>) =>
+    fetchAndUnwrap<unknown>("/academics/grades/", getValidAccessToken),
 
-  getLevels: () => {
-    return api.get("/academics/levels/");
-  },
+  getLevels: (getValidAccessToken: () => Promise<string | null>) =>
+    fetchAndUnwrap<unknown>("/academics/levels/", getValidAccessToken),
 
-  getGradesByLevel: (level: string) => {
-    return api.get(`/academics/levels/${level}/grades/`);
-  },
+  getGradesByLevel: (
+    getValidAccessToken: () => Promise<string | null>,
+    level: string
+  ) =>
+    fetchAndUnwrap<unknown>(
+      `/academics/levels/${encodeURIComponent(level)}/grades/`,
+      getValidAccessToken
+    ),
 
-  getChildren: () => {
-    return api.get("/users/my-children/");
-  },
+  getChildren: (getValidAccessToken: () => Promise<string | null>) =>
+    fetchAndUnwrap<Student[]>("/users/my-children/", getValidAccessToken),
 
-  getChildDetail: (childId: number) => {
-    return api.get(`/users/children/${childId}/`);
-  },
+  getChildDetail: (
+    getValidAccessToken: () => Promise<string | null>,
+    childId: number
+  ) =>
+    fetchAndUnwrap<Student>(
+      `/users/children/${childId}/`,
+      getValidAccessToken
+    ),
 
   updateChild: (
+    getValidAccessToken: () => Promise<string | null>,
     childId: number,
     payload: {
       first_name?: string;
@@ -88,20 +109,62 @@ export const userService = {
       school_name?: string;
       county?: string;
     }
+  ) =>
+    fetchAndUnwrap<Student>(
+      `/users/children/${childId}/update/`,
+      getValidAccessToken,
+      {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      }
+    ),
+
+  getGradeQuestions: (
+    getValidAccessToken: () => Promise<string | null>,
+    filters?: {
+      subject_id?: number;
+      difficulty?: "easy" | "medium" | "hard";
+      page?: number;
+    }
   ) => {
-    return api.put(`/users/children/${childId}/update/`, payload);
+    const params = new URLSearchParams();
+    if (filters?.subject_id !== undefined)
+      params.set("subject_id", String(filters.subject_id));
+    if (filters?.difficulty) params.set("difficulty", filters.difficulty);
+    if (filters?.page !== undefined)
+      params.set("page", String(filters.page));
+    const query = params.toString() ? `?${params.toString()}` : "";
+    return fetchAndUnwrap<unknown>(
+      `/questions/questions/grade_questions/${query}`,
+      getValidAccessToken
+    );
   },
 
-  getGradeQuestions: (filters?: {
-    subject_id?: number;
-    difficulty?: "easy" | "medium" | "hard";
-    page?: number;
-  }) => {
-    const params: Record<string, string | number> = {};
-    if (filters?.subject_id) params.subject_id = filters.subject_id;
-    if (filters?.difficulty) params.difficulty = filters.difficulty;
-    if (filters?.page) params.page = filters.page;
+  getQuestionById: (
+    getValidAccessToken: () => Promise<string | null>,
+    questionId: number
+  ) =>
+    fetchAndUnwrap<unknown>(
+      `/questions/questions/${questionId}/`,
+      getValidAccessToken
+    ),
 
-    return api.get(getApiUrl("/questions/questions/grade_questions/"), { params });
-  },
+  recordQuestionAttempt: (
+    getValidAccessToken: () => Promise<string | null>,
+    data: {
+      question_id: number;
+      selected_option: string;
+      confidence?: string;
+      self_explanation?: string;
+      asked_ai_help?: boolean;
+    }
+  ) =>
+    fetchAndUnwrap<unknown>(
+      "/questions/attempts/record_attempt/",
+      getValidAccessToken,
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      }
+    ),
 };

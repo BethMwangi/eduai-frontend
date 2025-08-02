@@ -8,9 +8,10 @@ import SubjectsSection from "@/components/Subjects-section";
 
 export default function HomePage() {
   return (
-    <>
+    <div className="flex flex-col min-h-screen">
+
       <Navbar />{" "}
-      <main className="mx-auto my-0 flex min-h-screen bg-gradient-to-b from-[#F9FAFB] to-[#D2D6DB]">
+      <main className="flex flex-col w-full bg-gradient-to-b from-[#F9FAFB] to-[#D2D6DB]">
         <Hero
           title=" Turn your exams into success stories."
           description="AI-powered assessment platform for students, helping you prepare, test and succeed.."
@@ -20,6 +21,6 @@ export default function HomePage() {
       </main>
       <SubjectsSection />
       <Footer />
-    </>
+      </div>
   );
 }
