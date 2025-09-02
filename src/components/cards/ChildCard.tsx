@@ -1,23 +1,11 @@
 import { Eye } from "lucide-react";
 import React from "react";
+import { Student } from "@/types/auth";
 
 interface ChildCardProps {
-  child: {
-    id: number;
-    full_name: string;
-    first_name: string;
-    last_name: string;
-    age: number;
-    grade: number;
-    grade_name: string;
-    overall_average_score: number;
-    current_streak_days: number;
-    total_subjects: number;
-    total_questions_attempted: number;
-    last_activity_date: string | null;
+  child: Student;
+  onViewDetail: (childId: number) => void;
   };
-  onViewDetail: (id: number) => void;
-}
 
 const ChildCard: React.FC<ChildCardProps> = ({ child, onViewDetail }) => {
   const avatar = `${child.first_name[0]}${child.last_name[0]}`;
@@ -35,7 +23,7 @@ const ChildCard: React.FC<ChildCardProps> = ({ child, onViewDetail }) => {
           <h3 className="font-semibold text-text">{child.full_name}</h3>
           <div className="flex flex-col gap-1">
             <span className="text-sm text-gray-500">
-              Grade: <span className="font-medium">{child.grade}</span>
+              Grade: <span className="font-medium">{child.grade_name}</span>
             </span>
             <span className="text-sm text-gray-500">
               Age: <span className="font-medium">{child.age}</span>

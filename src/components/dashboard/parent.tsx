@@ -27,6 +27,8 @@ export default function ParentDashboard() {
     try {
       const list = await userService.getChildren(getValidAccessToken);
       setStudent(Array.isArray(list) ? list : []);
+
+      console.log("teh list of childres in s", list)
     } catch (error) {
       console.error("Failed to fetch children:", error);
       setStudent([]);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
   BookOpen,
@@ -11,15 +11,90 @@ import {
   CheckCircle,
   Play,
   ArrowLeft,
+  Loader
 } from "lucide-react";
 import DashboardLayout from "./dashboard.layout";
 import QuestionPool from "../student/question-pool";
 import { IconComponentCard } from "../cards/IconComponentCard";
-import StudentSidebar from "./student-sidebar"; 
+import StudentSidebar from "./student-sidebar";
+import { SubjectProgressData } from "@/types/auth";
+import { userService } from "@/services/userService";
+import { useAuth } from "@/context/auth";
 
 export default function StudentDashboard() {
+  const { getValidAccessToken } = useAuth();
   const [selectedSubject, setSelectedSubject] = useState("all");
   const [view, setView] = useState<"dashboard" | "question-pool">("dashboard");
+  const [subjectProgress, setSubjectProgress] = useState<SubjectProgressData[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [stats, setStats] = useState({
+    totalQuestions: 0,
+    correctAnswers: 0,
+    averageScore: 0,
+    streakDays: 0,
+  });
+
+
+  const loadStudentData = useCallback(async () => {
+    if (!getValidAccessToken) return;
+    
+    setLoading(true);
+    try {
+      // Load student stats by subject
+      const statsData = await userService.getStudentStatsBySubject(getValidAccessToken);
+      
+      // Calculate overall stats
+      const totalAttempts = statsData.reduce((sum, subject) => sum + subject.total_attempts, 0);
+      const totalCorrect = statsData.reduce((sum, subject) => sum + subject.correct_attempts, 0);
+      const averageAccuracy = statsData.length > 0 
+        ? Math.round(statsData.reduce((sum, subject) => sum + subject.accuracy, 0) / statsData.length)
+        : 0;
+
+      setStats({
+        totalQuestions: totalAttempts,
+        correctAnswers: totalCorrect,
+        averageScore: averageAccuracy,
+        streakDays: 12, // This would come from student profile
+      });
+
+      // Transform and set subject progress
+      const transformedProgress = statsData.map(subject => ({
+        ...subject,
+        progress_percentage: Math.round(subject.accuracy),
+      }));
+
+      setSubjectProgress(transformedProgress);
+    } catch (error) {
+      console.error("Failed to load student data:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [getValidAccessToken]);
+
+  useEffect(() => {
+    loadStudentData();
+  }, [loadStudentData]);
+
+
+
+  const getSubjectColor = (index: number): string => {
+    const colors = ["bg-primary", "bg-accent", "bg-secondary", "bg-purple-500", "bg-indigo-500"];
+    return colors[index % colors.length];
+  };
+
+  const formatLastActivity = (dateString: string | null): string => {
+    if (!dateString) return "Never";
+    
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (diffInDays === 0) return "Today";
+    if (diffInDays === 1) return "Yesterday";
+    if (diffInDays < 7) return `${diffInDays} days ago`;
+    return date.toLocaleDateString();
+  };
+
 
   const quickActions = [
     {
@@ -75,49 +150,44 @@ export default function StudentDashboard() {
     },
   ];
 
-  const stats = {
-    totalQuestions: 1105,
-    correctAnswers: 887,
-    averageScore: 80,
-    streakDays: 12,
-  };
-  const subjects = [
-    {
-      name: "Mathematics",
-      progress: 85,
-      questionsAnswered: 245,
-      color: "bg-primary",
-      totalQuestions: 300,
-    },
-    {
-      name: "Physics",
-      progress: 72,
-      questionsAnswered: 189,
-      color: "bg-accent",
-      totalQuestions: 250,
-    },
-    {
-      name: "Chemistry",
-      progress: 91,
-      questionsAnswered: 312,
-      color: "bg-secondary",
-      totalQuestions: 350,
-    },
-    {
-      name: "Biology",
-      progress: 68,
-      questionsAnswered: 156,
-      color: "bg-primary",
-      totalQuestions: 200,
-    },
-    {
-      name: "English",
-      progress: 79,
-      questionsAnswered: 203,
-      color: "bg-accent",
-      totalQuestions: 280,
-    },
-  ];
+
+  // const subjects = [
+  //   {
+  //     name: "Mathematics",
+  //     progress: 85,
+  //     questionsAnswered: 245,
+  //     color: "bg-primary",
+  //     totalQuestions: 300,
+  //   },
+  //   {
+  //     name: "Physics",
+  //     progress: 72,
+  //     questionsAnswered: 189,
+  //     color: "bg-accent",
+  //     totalQuestions: 250,
+  //   },
+  //   {
+  //     name: "Chemistry",
+  //     progress: 91,
+  //     questionsAnswered: 312,
+  //     color: "bg-secondary",
+  //     totalQuestions: 350,
+  //   },
+  //   {
+  //     name: "Biology",
+  //     progress: 68,
+  //     questionsAnswered: 156,
+  //     color: "bg-primary",
+  //     totalQuestions: 200,
+  //   },
+  //   {
+  //     name: "English",
+  //     progress: 79,
+  //     questionsAnswered: 203,
+  //     color: "bg-accent",
+  //     totalQuestions: 280,
+  //   },
+  // ];
 
   const upcomingTests = [
     {
@@ -196,11 +266,13 @@ export default function StudentDashboard() {
           </div>
 
           <div className="flex">
-             <StudentSidebar
-            user={layoutUser}
-            activePage={view === "question-pool" ? "question-pool" : "dashboard"}
-            onViewChange={(v) => setView(v)}
-          />
+            <StudentSidebar
+              user={layoutUser}
+              activePage={
+                view === "question-pool" ? "question-pool" : "dashboard"
+              }
+              onViewChange={(v) => setView(v)}
+            />
 
             <div className="flex-1 p-6 bg-gray-50">
               {view === "question-pool" ? (
@@ -262,7 +334,7 @@ export default function StudentDashboard() {
                             {stats.totalQuestions.toLocaleString()}
                           </p>
                           <p className="text-xs text-accent mt-1">
-                            +23 this week
+                            Attempted so far
                           </p>
                         </div>
                         <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
@@ -271,6 +343,7 @@ export default function StudentDashboard() {
                       </div>
                     </div>
 
+                   
                     <div className="bg-white p-6 rounded-xl border border-gray-200 hover:shadow-lg transition-all duration-300 hover:border-accent/30">
                       <div className="flex items-center justify-between">
                         <div>
@@ -278,10 +351,16 @@ export default function StudentDashboard() {
                             Correct Answers
                           </p>
                           <p className="text-2xl font-bold text-text">
-                            {stats.correctAnswers}
+                            {loading ? (
+                              <Loader className="w-6 h-6 animate-spin" />
+                            ) : (
+                              stats.correctAnswers
+                            )}
                           </p>
                           <p className="text-xs text-accent mt-1">
-                            80% accuracy
+                            {stats.totalQuestions > 0
+                              ? `${Math.round((stats.correctAnswers / stats.totalQuestions) * 100)}% accuracy`
+                              : "Start practicing!"}
                           </p>
                         </div>
                         <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center">
@@ -290,15 +369,20 @@ export default function StudentDashboard() {
                       </div>
                     </div>
 
+                   
                     <div className="bg-white p-6 rounded-xl border border-gray-200 hover:shadow-lg transition-all duration-300 hover:border-secondary/30">
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-gray-500 text-sm">Average Score</p>
                           <p className="text-2xl font-bold text-text">
-                            {stats.averageScore}%
+                            {loading ? (
+                              <Loader className="w-6 h-6 animate-spin" />
+                            ) : (
+                              `${stats.averageScore}%`
+                            )}
                           </p>
                           <p className="text-xs text-secondary mt-1">
-                            +5% this month
+                            Across all subjects
                           </p>
                         </div>
                         <div className="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center">
@@ -307,7 +391,7 @@ export default function StudentDashboard() {
                       </div>
                     </div>
 
-                    <div className="bg-white p-6 rounded-xl border border-gray-200 hover:shadow-lg transition-all duration-300 hover:border-accent/30">
+                     <div className="bg-white p-6 rounded-xl border border-gray-200 hover:shadow-lg transition-all duration-300 hover:border-accent/30">
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-gray-500 text-sm">Study Streak</p>
@@ -326,7 +410,7 @@ export default function StudentDashboard() {
                   </div>
 
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Subject Progress - Enhanced */}
+                    {/* Subject Progress - Real Data */}
                     <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
                       <div className="flex items-center justify-between mb-6">
                         <h2 className="text-xl font-semibold text-text">
@@ -340,56 +424,81 @@ export default function StudentDashboard() {
                             className="text-sm border border-gray-200 rounded-lg px-3 py-1 focus:ring-2 focus:ring-primary/20 focus:border-primary"
                           >
                             <option value="all">All Subjects</option>
-                            {subjects.map((subject) => (
-                              <option key={subject.name} value={subject.name}>
-                                {subject.name}
+                            {subjectProgress.map((subject) => (
+                              <option key={subject.subject_id} value={subject.subject_name}>
+                                {subject.subject_display_name}
                               </option>
                             ))}
                           </select>
                         </div>
                       </div>
 
-                      <div className="space-y-4">
-                        {subjects.map((subject) => (
-                          <div
-                            key={subject.name}
-                            className="p-4 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer group"
+                      {loading ? (
+                        <div className="flex items-center justify-center py-8">
+                          <Loader className="w-8 h-8 animate-spin text-primary" />
+                          <span className="ml-2 text-gray-600">Loading your progress...</span>
+                        </div>
+                      ) : subjectProgress.length === 0 ? (
+                        <div className="text-center py-8">
+                          <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                          <h3 className="text-lg font-medium text-gray-900 mb-2">
+                            No Progress Yet
+                          </h3>
+                          <p className="text-gray-600 mb-4">
+                            Start practicing questions to see your subject progress
+                          </p>
+                          <button
+                            onClick={() => setView("question-pool")}
+                            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
                           >
-                            <div className="flex items-center justify-between mb-3">
-                              <h3 className="font-semibold text-text group-hover:text-primary transition-colors">
-                                {subject.name}
-                              </h3>
-                              <span className="text-sm text-gray-500">
-                                {subject.questionsAnswered}/
-                                {subject.totalQuestions} questions
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-3 mb-2">
-                              <div className="flex-1 bg-gray-200 rounded-full h-3">
-                                <div
-                                  className={`h-3 rounded-full ${subject.color} transition-all duration-500`}
-                                  style={{ width: `${subject.progress}%` }}
-                                ></div>
+                            Browse Questions
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {subjectProgress
+                            .filter((subject) => 
+                              selectedSubject === "all" || subject.subject_name === selectedSubject
+                            )
+                            .map((subject, index) => (
+                            <div
+                              key={subject.subject_id}
+                              className="p-4 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer group"
+                            >
+                              <div className="flex items-center justify-between mb-3">
+                                <h3 className="font-semibold text-text group-hover:text-primary transition-colors">
+                                  {subject.subject_display_name}
+                                </h3>
+                                <span className="text-sm text-gray-500">
+                                  {subject.correct_attempts}/{subject.total_attempts} correct
+                                </span>
                               </div>
-                              <span className="text-sm font-bold text-text">
-                                {subject.progress}%
-                              </span>
+                              <div className="flex items-center gap-3 mb-2">
+                                <div className="flex-1 bg-gray-200 rounded-full h-3">
+                                  <div
+                                    className={`h-3 rounded-full ${getSubjectColor(index)} transition-all duration-500`}
+                                    style={{ width: `${subject.progress_percentage || 0}%` }}
+                                  ></div>
+                                </div>
+                                <span className="text-sm font-bold text-text">
+                                  {subject.progress_percentage || 0}%
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between text-xs text-gray-500">
+                                <span>
+                                  Last activity: {formatLastActivity(subject.last_activity)}
+                                </span>
+                                <Link
+                                  href={`/student/subject/${subject.subject_id}`}
+                                  className="text-primary hover:text-primary/80 font-medium"
+                                >
+                                  View Details →
+                                </Link>
+                              </div>
                             </div>
-                            <div className="flex items-center justify-between text-xs text-gray-500">
-                              <span>
-                                Progress this week: +
-                                {Math.floor(Math.random() * 10) + 1}%
-                              </span>
-                              <Link
-                                href={`/student/subject/${subject.name.toLowerCase()}`}
-                                className="text-primary hover:text-primary/80 font-medium"
-                              >
-                                View Details →
-                              </Link>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     {/* Right Sidebar Content */}
@@ -413,8 +522,7 @@ export default function StudentDashboard() {
                                   {activity.quiz}
                                 </h4>
                                 <p className="text-xs text-gray-500">
-                                  {activity.subject} • {activity.questions} •{" "}
-                                  {activity.date}
+                                  {activity.subject} • {activity.questions} • {activity.date}
                                 </p>
                               </div>
                               <div
@@ -480,39 +588,33 @@ export default function StudentDashboard() {
                           Achievements
                         </h3>
                         <div className="space-y-3">
-                          {achievements
-                            .slice(0, 3)
-                            .map((achievement, index) => (
-                              <div
-                                key={index}
-                                className={`flex items-center gap-3 p-3 rounded-lg ${
-                                  achievement.earned
-                                    ? "bg-accent/5 border border-accent/20"
-                                    : "bg-gray-50 border border-gray-200"
-                                }`}
-                              >
-                                <span className="text-lg">
-                                  {achievement.icon}
-                                </span>
-                                <div className="flex-1 min-w-0">
-                                  <h4
-                                    className={`font-medium text-sm ${
-                                      achievement.earned
-                                        ? "text-text"
-                                        : "text-gray-500"
-                                    }`}
-                                  >
-                                    {achievement.title}
-                                  </h4>
-                                  <p className="text-xs text-gray-500 truncate">
-                                    {achievement.description}
-                                  </p>
-                                </div>
-                                {achievement.earned && (
-                                  <CheckCircle className="w-4 h-4 text-accent" />
-                                )}
+                          {achievements.slice(0, 3).map((achievement, index) => (
+                            <div
+                              key={index}
+                              className={`flex items-center gap-3 p-3 rounded-lg ${
+                                achievement.earned
+                                  ? "bg-accent/5 border border-accent/20"
+                                  : "bg-gray-50 border border-gray-200"
+                              }`}
+                            >
+                              <span className="text-lg">{achievement.icon}</span>
+                              <div className="flex-1 min-w-0">
+                                <h4
+                                  className={`font-medium text-sm ${
+                                    achievement.earned ? "text-text" : "text-gray-500"
+                                  }`}
+                                >
+                                  {achievement.title}
+                                </h4>
+                                <p className="text-xs text-gray-500 truncate">
+                                  {achievement.description}
+                                </p>
                               </div>
-                            ))}
+                              {achievement.earned && (
+                                <CheckCircle className="w-4 h-4 text-accent" />
+                              )}
+                            </div>
+                          ))}
                         </div>
                         <Link
                           href="/student/achievements"

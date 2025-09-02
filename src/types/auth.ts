@@ -154,5 +154,159 @@ export function isUser(value: unknown): value is User {
     typeof obj.last_name === "string"
   );
 }
+export interface PracticeSession {
+  id: number;
+  student: number;
+  subject: {
+    id: number;
+    name: string;
+    display_name: string;
+    grade?: {
+      id: number;
+      name: string;
+      display_name: string;
+    };
+  } | string; // Can be either object or string
+  topic: string;
+  current_question_sequence: number;
+  questions_pool: number[];
+  questions_completed: number; // Add this property
+  total_questions: number;
+  score: number;
+  current_score?: number; // Add this as optional
+  difficulty: "Easy" | "Medium" | "Hard";
+  status: "in-progress" | "completed";
+  time_spent_seconds: number;
+  time_spent?: number; // Alternative property name
+  last_accessed: string;
+  lastAccessed?: string; // Alternative property name
+  started_at: string;
+  progress_percentage?: number;
+}
+
+export interface PracticeSessionDetail extends PracticeSession {
+  questions: Array<{
+    id: number;
+    question_text: string;
+    options: string[];
+    correct_answer: string;
+    user_answer?: string;
+    is_answered: boolean;
+    explanation?: string;
+  }>;
+  current_question_index: number;
+}
+
+export interface CompletedPracticeSession {
+  id: number;
+  student: number;
+  subject: {
+    id: number;
+    name: string;
+    display_name: string;
+  } | string; // Can be either object or string
+  topic: string;
+  questions_completed: number;
+  total_questions: number;
+  score: number;
+  current_score?: number;
+  final_score?: number;
+  difficulty: "Easy" | "Medium" | "Hard";
+  status: "completed";
+  time_spent_seconds: number;
+  time_spent?: number;
+  started_at: string;
+  completed_at: string;
+  lastAccessed?: string;
+}
 
 
+export interface PaginatedPracticeSessions {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: CompletedPracticeSession[];
+}
+
+
+export interface Grade {
+  id: number;
+  name: string;
+  level: "junior" | "senior";
+  display_name: string;
+  level_display: string;
+  minimum_age: number | null;
+  maximum_age: number | null;
+  is_active: boolean;
+}
+
+export interface Level {
+  level: "junior" | "senior";
+  display_name: string;
+}
+
+
+export interface Subject {
+  id: number;
+  name: string;
+  description?: string;
+  grade_id?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SubjectProgress {
+  id: number;
+  subject: {
+    id: number;
+    name: string;
+    display_name: string;
+  };
+  total_questions_available: number;
+  total_questions_attempted: number;
+  total_questions_correct: number;
+  accuracy_percentage: number;
+  last_attempt_date: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+
+export interface TopicProgress {
+  id: number;
+  topic: string;
+  questions_available: number;
+  questions_attempted: number;
+  questions_correct: number;
+  accuracy_percentage: number;
+  last_practice_session: {
+    id: number;
+    topic: string;
+    score: number;
+    status: string;
+  } | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AllSubjectsProgressResponse {
+  [subjectId: string]: {
+    subject_progress: SubjectProgress;
+    topic_progress: TopicProgress[];
+  };
+}
+
+export interface SubjectProgressData {
+  subject_id: number;
+  subject_name: string;
+  subject_display_name: string;
+  total_attempts: number;
+  correct_attempts: number;
+  accuracy: number;
+  last_activity: string | null;
+  progress_percentage?: number;
+}
+
+export interface QuestionPracticeProps {
+  questionId: string;
+}

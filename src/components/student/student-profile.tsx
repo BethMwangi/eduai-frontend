@@ -257,7 +257,7 @@ export default function StudentProfile() {
                   <span className="font-semibold text-text">Class Performance</span>
                 </div>
                 <p className="text-sm text-gray-600">
-                  You're ranked #{stats.rank} out of {stats.totalStudents} students in your grade. Keep up the excellent
+                  You&apos;re ranked #{stats.rank} out of {stats.totalStudents} students in your grade. Keep up the excellent
                   work!
                 </p>
               </div>

@@ -1,8 +1,9 @@
 // src/services/userService.ts
 import { authFetch } from "@/lib/authFetch";
-import type { Student, User , ApiQuestionDetail} from "@/types/auth";
+import type { Student, User , ApiQuestionDetail, PracticeSession, PracticeSessionDetail, Grade, Subject , Level , AllSubjectsProgressResponse, SubjectProgress, TopicProgress} from "@/types/auth";
 import type { ApiResponse } from "@/types/api";
 import { unwrapApi } from "@/types/api";
+import type { PaginatedPracticeSessions } from "@/types/auth";
 
 
 /**
@@ -72,19 +73,16 @@ export const userService = {
     ),
 
   getGrades: (getValidAccessToken: () => Promise<string | null>) =>
-    fetchAndUnwrap<unknown>("/academics/grades/", getValidAccessToken),
+    fetchAndUnwrap<Grade[]>("/academics/grades/", getValidAccessToken),
 
-  getLevels: (getValidAccessToken: () => Promise<string | null>) =>
-    fetchAndUnwrap<unknown>("/academics/levels/", getValidAccessToken),
+ getLevels: (getValidAccessToken: () => Promise<string | null>) =>
+    fetchAndUnwrap<Level[]>("/academics/levels/", getValidAccessToken),
 
   getGradesByLevel: (
     getValidAccessToken: () => Promise<string | null>,
     level: string
   ) =>
-    fetchAndUnwrap<unknown>(
-      `/academics/levels/${encodeURIComponent(level)}/grades/`,
-      getValidAccessToken
-    ),
+    fetchAndUnwrap<Grade[]>(`/academics/levels/${encodeURIComponent(level)}/grades/`, getValidAccessToken),
 
   getChildren: (getValidAccessToken: () => Promise<string | null>) =>
     fetchAndUnwrap<Student[]>("/users/my-children/", getValidAccessToken),
@@ -166,4 +164,106 @@ getQuestionById: (
         body: JSON.stringify(data),
       }
     ),
+
+
+getActivePracticeSessions: (getValidAccessToken: () => Promise<string | null>) =>
+    fetchAndUnwrap<PracticeSession[]>(
+      "/practice-sessions/active/",
+      getValidAccessToken
+    ),
+
+  getPracticeSessionDetail: (
+    getValidAccessToken: () => Promise<string | null>,
+    sessionId: number
+  ) =>
+    fetchAndUnwrap<PracticeSessionDetail>(
+      `/practice-sessions/${sessionId}/`,
+      getValidAccessToken
+    ),
+
+  completePracticeSession: (
+    getValidAccessToken: () => Promise<string | null>,
+    sessionId: number,
+    data: {
+      final_score?: number;
+      time_spent?: number;
+      answers?: Array<{
+        question_id: number;
+        selected_option: string;
+        is_correct: boolean;
+        time_spent: number;
+      }>;
+    }
+  ) =>
+    fetchAndUnwrap<unknown>(
+      `/practice-sessions/${sessionId}/complete/`,
+      getValidAccessToken,
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      }
+    ),
+
+  getCompletedPracticeSessions: (
+    getValidAccessToken: () => Promise<string | null>,
+    page?: number
+  ) => {
+    const params = new URLSearchParams();
+    if (page !== undefined) params.set("page", String(page));
+    const query = params.toString() ? `?${params.toString()}` : "";
+    
+    return fetchAndUnwrap<PaginatedPracticeSessions>(
+      `/practice-sessions/completed/${query}`,
+      getValidAccessToken
+    );
+  },
+
+  // Grade and Subject APIs (if you need them)
+  getGradesList: (getValidAccessToken: () => Promise<string | null>) =>
+    fetchAndUnwrap<Grade[]>("/grades/", getValidAccessToken),
+
+  getGradeDetail: (
+    getValidAccessToken: () => Promise<string | null>,
+    gradeId: number
+  ) =>
+    fetchAndUnwrap<Grade>(`/grades/${gradeId}/`, getValidAccessToken),
+
+  getSubjectsList: (getValidAccessToken: () => Promise<string | null>) =>
+    fetchAndUnwrap<Subject[]>("/subjects/", getValidAccessToken),
+
+  getSubjectsByGrade: (
+    getValidAccessToken: () => Promise<string | null>,
+    gradeId: number
+  ) =>
+    fetchAndUnwrap<Subject[]>(
+      `/grades/${gradeId}/subjects/`,
+      getValidAccessToken
+    ),
+getSubjectProgress: (
+    getValidAccessToken: () => Promise<string | null>,
+    subjectId: number
+  ) =>
+    fetchAndUnwrap<{
+      subject_progress: SubjectProgress;
+      topic_progress: TopicProgress[];
+    }>(`/questions/subjects/${subjectId}/progress/`, getValidAccessToken),
+
+  // Get progress for all subjects
+  getAllSubjectsProgress: (getValidAccessToken: () => Promise<string | null>) =>
+    fetchAndUnwrap<AllSubjectsProgressResponse>(
+      "/questions/progress/all-subjects/",
+      getValidAccessToken
+    ),
+  // Get student question attempt stats by subject
+  getStudentStatsBySubject: (getValidAccessToken: () => Promise<string | null>) =>
+    fetchAndUnwrap<Array<{
+      subject_id: number;
+      subject_name: string;
+      subject_display_name: string;
+      total_attempts: number;
+      correct_attempts: number;
+      accuracy: number;
+      last_activity: string | null;
+    }>>("/questions/attempts/stats_by_subject/", getValidAccessToken),
+
 };

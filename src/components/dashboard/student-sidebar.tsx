@@ -97,13 +97,17 @@ export default function StudentSidebar({
             Achievements
           </Link>
 
-          <Link
-            href="/student/practice/continue"
-            className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors"
-          >
-            <Play className="w-5 h-5" />
-            Continue Practice
-          </Link>
+      <Link
+  href="/student/practice/continue"
+  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+    activePage === "practice"
+      ? "bg-primary/10 text-primary font-medium"
+      : "text-gray-600 hover:bg-gray-50"
+  }`}
+>
+  <Play className="w-5 h-5" />
+  Continue Practice
+</Link>
         </nav>
       </div>
     </div>

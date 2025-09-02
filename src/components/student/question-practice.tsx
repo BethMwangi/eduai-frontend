@@ -14,23 +14,26 @@ import {
   BookOpen,
   Target,
   Loader,
+  AlertCircle,
+  Trophy
 } from "lucide-react";
 import DashboardLayout from "../dashboard/dashboard.layout";
 import { userService } from "@/services/userService";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth";
-import { ApiQuestionDetail } from "@/types/auth";
+import { ApiQuestionDetail, QuestionPracticeProps } from "@/types/auth";
+import {getDifficultyColor} from "@/utils/colorUtils"
+import { formatTime } from "@/lib/utils";
 
-interface QuestionPracticeProps {
-  questionId: string;
-}
+const LETTERS = ["A", "B", "C", "D"] as const;
+type Letter = (typeof LETTERS)[number]; 
 
 export default function QuestionPractice({
   questionId,
 }: QuestionPracticeProps) {
   const { getValidAccessToken } = useAuth();
   const [question, setQuestion] = useState<ApiQuestionDetail | null>(null);
-  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [selectedLetter, setSelectedLetter] = useState<Letter | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showExplanation, setShowExplanation] = useState(false);
   const [showTips, setShowTips] = useState(false);
@@ -39,7 +42,15 @@ export default function QuestionPractice({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [confidence, setConfidence] = useState<"Sure" | "Not Sure">("Sure");
+  const [selfExplanation, setSelfExplanation] = useState("");
+  const [showConfidenceSelector, setShowConfidenceSelector] = useState(false);
+
+
   const router = useRouter();
+
 
   useEffect(() => {
     if (!questionId) return;
@@ -47,12 +58,16 @@ export default function QuestionPractice({
       setLoading(true);
       setError("");
       try {
-        if (!getValidAccessToken) throw new Error("Missing token getter");
         const q = await userService.getQuestionById(
           getValidAccessToken,
           Number(questionId)
         );
         setQuestion(q as ApiQuestionDetail);
+        
+        // Debug logging
+        console.log("🔍 DEBUG: Full question data:", q);
+        console.log("🔍 DEBUG: correct_option:", (q as ApiQuestionDetail & { correct_option?: string }).correct_option);
+        console.log("🔍 DEBUG: options:", q.options);
       } catch (e) {
         console.error("Failed to load question:", e);
         setError("Failed to load question.");
@@ -61,6 +76,7 @@ export default function QuestionPractice({
       }
     })();
   }, [questionId, getValidAccessToken]);
+
 
   // Timer effect
   useEffect(() => {
@@ -71,50 +87,67 @@ export default function QuestionPractice({
   }, [startTime]);
 
   const handleSubmit = async () => {
-    if (selectedAnswer === null) return;
+    if (!selectedLetter) return;
+    
+    setSubmitting(true);
+    setSubmitError("");
     setIsSubmitted(true);
     setShowExplanation(true);
 
+    console.log("🚀 SUBMIT DEBUG:");
+    console.log("- Selected letter:", selectedLetter);
+    console.log("- Correct letter:", questionData.correctLetter);
+    console.log("- Will be correct?", selectedLetter === questionData.correctLetter);
+
     try {
-      if (!getValidAccessToken) throw new Error("Missing token getter");
-      await userService.recordQuestionAttempt(getValidAccessToken, {
+      const submitData = {
         question_id: Number(questionId),
-        selected_option: String.fromCharCode(65 + selectedAnswer), // A, B, C...
-        confidence: "medium",
-        self_explanation: "",
+        selected_option: selectedLetter, // Submit letter directly, no conversion
+        confidence: confidence, // Use "Sure" or "Not Sure"
+        self_explanation: selfExplanation.trim() || undefined,
         asked_ai_help: showTips,
-      });
+      };
+      
+      console.log("📤 Sending to backend:", submitData);
+      
+      await userService.recordQuestionAttempt(getValidAccessToken, submitData);
+      
+      // Success feedback
+      console.log("✅ Question attempt recorded successfully!");
+      
     } catch (err) {
-      console.error("Error recording attempt:", err);
-      // optionally set an error state if you want to surface this to the user
+      console.error("❌ Error recording attempt:", err);
+      setSubmitError("Failed to save your answer. Please try again.");
+      
+      // Reset submission state so user can retry
+      setIsSubmitted(false);
+      setShowExplanation(false);
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleReset = () => {
-    setSelectedAnswer(null);
+    setSelectedLetter(null);
     setIsSubmitted(false);
     setShowExplanation(false);
     setShowTips(false);
+    setSubmitError("");
+    setConfidence("Sure");
+    setSelfExplanation("");
+    setShowConfidenceSelector(false);
   };
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
-
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case "Easy":
-        return "bg-green-100 text-green-600";
-      case "Medium":
-        return "bg-yellow-100 text-yellow-600";
-      case "Hard":
-        return "bg-red-100 text-red-600";
+ const getConfidenceColor = (level: string) => {
+    switch (level) {
+      case "Sure":
+        return "bg-green-100 text-green-600 border-green-200";
+      case "Not Sure":
+        return "bg-yellow-100 text-yellow-600 border-yellow-200";
       default:
-        return "bg-gray-100 text-gray-600";
+        return "bg-gray-100 text-gray-600 border-gray-200";
     }
   };
+
 
   // Loading state
   if (loading) {
@@ -153,15 +186,12 @@ export default function QuestionPractice({
       </DashboardLayout>
     );
   }
-
-  // Safe fallback for topic (since ApiQuestionDetail may not have it typed)
-  // @ts-ignore
-  const topicName =
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (question as any).topic?.display_name ??
+const topicName =
+    (question as ApiQuestionDetail & { topic?: { display_name?: string } }).topic?.display_name ??
     question.subject?.display_name ??
     "Topic";
 
+  // FIXED: Build questionData with proper letter handling
   const questionData = {
     id: question.id,
     question: question.question_text,
@@ -174,21 +204,36 @@ export default function QuestionPractice({
       question.question_type?.toLowerCase() === "mcq"
         ? "Multiple Choice"
         : question.question_type || "Other",
-    options: Object.values(question.options || {}),
-    correctAnswer: question.correct_answer_index ?? 0,
+
+    // IMPORTANT: build options in deterministic A,B,C,D order
+    optionsList: LETTERS
+      .map((k) => ({ key: k, text: (question.options || {})[k] }))
+      .filter((o) => o.text), // remove undefined
+
+    // use backend's correct_option (a letter)
+    correctLetter: (question as ApiQuestionDetail & { correct_option?: string }).correct_option as Letter | undefined,
+
     explanation: question.explanation || "No explanation provided.",
     detailedExplanation:
-      question.detailed_explanation || "No detailed explanation available.",
-    tips: question.tips || [],
-    relatedConcepts: question.related_concepts || [],
-    estimatedTime: question.estimated_time || "2 mins",
-    points: question.points ?? 5,
-    attempts: question.attempts_count ?? 0,
-    tags: question.tags || [],
+      (question as ApiQuestionDetail & { detailed_explanation?: string }).detailed_explanation || "No detailed explanation available.",
+    tips: (question as ApiQuestionDetail & { tips?: string[] }).tips || [],
+    relatedConcepts: (question as ApiQuestionDetail & { related_concepts?: string[] }).related_concepts || [],
+    estimatedTime: (question as ApiQuestionDetail & { estimated_time?: string }).estimated_time || "2 mins",
+    points: (question as ApiQuestionDetail & { points?: number }).points ?? 5,
+    attempts: (question as ApiQuestionDetail & { attempts_count?: number }).attempts_count ?? 0,
+    tags: (question as ApiQuestionDetail & { tags?: string[] }).tags || [],
   };
 
-  const isCorrect = selectedAnswer === questionData.correctAnswer;
+  // derive index of the correct letter for UI highlighting
+  const correctIndex = questionData.correctLetter
+    ? questionData.optionsList.findIndex((o) => o.key === questionData.correctLetter)
+    : -1;
 
+  const isCorrect = selectedLetter && questionData.correctLetter
+    ? selectedLetter === questionData.correctLetter
+    : false;
+    
+  
   return (
     <DashboardLayout>
       {(user) => (
@@ -270,61 +315,132 @@ export default function QuestionPractice({
                     {questionData.question}
                   </h2>
 
-                  {/* Answer Options */}
+                  {/* FIXED: Answer Options using letter keys */}
                   <div className="space-y-3 mb-6">
-                    {questionData.options.map((option, index) => (
-                      <button
-                        key={index}
-                        onClick={() =>
-                          !isSubmitted && setSelectedAnswer(index)
-                        }
-                        disabled={isSubmitted}
-                        className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
-                          selectedAnswer === index
-                            ? isSubmitted
-                              ? index === questionData.correctAnswer
+                    {questionData.optionsList.map((opt, index) => {
+                      const isSelected = selectedLetter === opt.key;
+                      const isAnswer = index === correctIndex;
+
+                      return (
+                        <button
+                          key={opt.key}
+                          onClick={() => !isSubmitted && setSelectedLetter(opt.key)}
+                          disabled={isSubmitted}
+                          className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
+                            isSubmitted
+                              ? isAnswer
                                 ? "border-green-500 bg-green-50"
-                                : "border-red-500 bg-red-50"
-                              : "border-primary bg-primary/5"
-                            : isSubmitted &&
-                              index === questionData.correctAnswer
-                            ? "border-green-500 bg-green-50"
-                            : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-                        } ${
-                          isSubmitted ? "cursor-not-allowed" : "cursor-pointer"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium">
-                            {String.fromCharCode(65 + index)}. {option}
-                          </span>
-                          {isSubmitted && (
-                            <div>
-                              {index === questionData.correctAnswer ? (
-                                <CheckCircle className="w-5 h-5 text-green-500" />
-                              ) : selectedAnswer === index ? (
-                                <XCircle className="w-5 h-5 text-red-500" />
-                              ) : null}
-                            </div>
-                          )}
-                        </div>
-                      </button>
-                    ))}
+                                : isSelected
+                                ? "border-red-500 bg-red-50"
+                                : "border-gray-200"
+                              : isSelected
+                              ? "border-primary bg-primary/5"
+                              : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                          } ${isSubmitted ? "cursor-not-allowed" : "cursor-pointer"}`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium">
+                              {opt.key}. {opt.text}
+                            </span>
+                            {isSubmitted && (
+                              <>
+                                {isAnswer ? (
+                                  <CheckCircle className="w-5 h-5 text-green-500" />
+                                ) : isSelected ? (
+                                  <XCircle className="w-5 h-5 text-red-500" />
+                                ) : null}
+                              </>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
 
-                  {/* Submit Button */}
+                  {/* Enhanced Submit Section */}
+                  {!isSubmitted && selectedLetter && (
+                    <div className="space-y-4 mb-6 p-4 bg-gray-50 rounded-lg">
+                      {/* Confidence Selector */}
+                      <div>
+                        <button
+                          onClick={() => setShowConfidenceSelector(!showConfidenceSelector)}
+                          className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800"
+                        >
+                          <span>How confident are you?</span>
+                          <span className={`px-2 py-1 text-xs rounded-full ${getConfidenceColor(confidence)}`}>
+                            {confidence}
+                          </span>
+                        </button>
+                        
+                        {showConfidenceSelector && (
+                          <div className="mt-2 flex gap-2">
+                            {["Sure", "Not Sure"].map((level) => (
+                              <button
+                                key={level}
+                                onClick={() => setConfidence(level as "Sure" | "Not Sure")}
+                                className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
+                                  confidence === level
+                                    ? getConfidenceColor(level)
+                                    : "bg-white border-gray-200 hover:bg-gray-50"
+                                }`}
+                              >
+                                {level}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Optional Self Explanation */}
+                      <div>
+                        <label className="block text-sm text-gray-600 mb-1">
+                          Explain your reasoning (optional):
+                        </label>
+                        <textarea
+                          value={selfExplanation}
+                          onChange={(e) => setSelfExplanation(e.target.value)}
+                          placeholder="Why did you choose this answer?"
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                          rows={2}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Enhanced Submit Button */}
                   {!isSubmitted && (
                     <button
                       onClick={handleSubmit}
-                      disabled={selectedAnswer === null}
-                      className="w-full px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                      disabled={selectedLetter === null || submitting}
+                      className="w-full px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2"
                     >
-                      Submit Answer
+                      {submitting ? (
+                        <>
+                          <Loader className="w-5 h-5 animate-spin" />
+                          Submitting...
+                        </>
+                      ) : (
+                        "Submit Answer"
+                      )}
                     </button>
                   )}
 
-                  {/* Result */}
-                  {isSubmitted && (
+                  {/* Submit Error */}
+                  {submitError && (
+                    <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+                      <AlertCircle className="w-5 h-5 text-red-500" />
+                      <span className="text-red-700 text-sm">{submitError}</span>
+                      <button
+                        onClick={handleSubmit}
+                        className="ml-auto px-3 py-1 bg-red-100 text-red-700 text-sm rounded hover:bg-red-200"
+                      >
+                        Retry
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Enhanced Result */}
+                  {isSubmitted && !submitting && (
                     <div
                       className={`p-4 rounded-lg ${
                         isCorrect
@@ -334,7 +450,10 @@ export default function QuestionPractice({
                     >
                       <div className="flex items-center gap-3 mb-2">
                         {isCorrect ? (
-                          <CheckCircle className="w-6 h-6 text-green-500" />
+                          <>
+                            <Trophy className="w-6 h-6 text-green-500" />
+                            <CheckCircle className="w-6 h-6 text-green-500" />
+                          </>
                         ) : (
                           <XCircle className="w-6 h-6 text-red-500" />
                         )}
@@ -348,18 +467,27 @@ export default function QuestionPractice({
                         <span className="text-sm text-gray-600">
                           Time: {formatTime(timeSpent)}
                         </span>
+                        <span className={`px-2 py-1 text-xs rounded-full ${getConfidenceColor(confidence)}`}>
+                          {confidence}
+                        </span>
                       </div>
                       {isCorrect && (
-                        <p className="text-green-700 text-sm">
-                          Great job! You earned {questionData.points} points.
-                        </p>
+                        <div className="text-green-700 text-sm space-y-1">
+                          <p>🎉 Great job! You earned {questionData.points} points.</p>
+                          <p>✅ Answer saved to your progress!</p>
+                        </div>
                       )}
                       {!isCorrect && (
-                        <p className="text-red-700 text-sm">
-                          The correct answer is{" "}
-                          {String.fromCharCode(65 + questionData.correctAnswer)}:{" "}
-                          {questionData.options[questionData.correctAnswer]}
-                        </p>
+                        <div className="text-red-700 text-sm space-y-1">
+                          <p>
+                            The correct answer is {questionData.correctLetter}:{" "}
+                            {
+                              questionData.optionsList.find(o => o.key === questionData.correctLetter)
+                                ?.text ?? "N/A"
+                            }
+                          </p>
+                          <p>📊 Your attempt has been recorded for learning analytics.</p>
+                        </div>
                       )}
                     </div>
                   )}
@@ -373,9 +501,7 @@ export default function QuestionPractice({
                         Explanation
                       </h3>
                       <button
-                        onClick={() =>
-                          setShowExplanation((prev) => !prev)
-                        }
+                        onClick={() => setShowExplanation((prev) => !prev)}
                         className="flex items-center gap-1 text-gray-500 hover:text-gray-700"
                       >
                         {showExplanation ? (
@@ -402,7 +528,7 @@ export default function QuestionPractice({
                 )}
 
                 {/* Tips Section */}
-                {showTips && (
+                {showTips && questionData.tips.length > 0 && (
                   <div className="bg-yellow-50 rounded-xl border border-yellow-200 p-6">
                     <h3 className="text-lg font-semibold text-yellow-800 mb-4 flex items-center gap-2">
                       <Lightbulb className="w-5 h-5" />
@@ -419,21 +545,23 @@ export default function QuestionPractice({
                         </li>
                       ))}
                     </ul>
-                    <div className="mt-4 pt-4 border-t border-yellow-200">
-                      <h4 className="font-medium text-yellow-800 mb-2">
-                        Related Concepts:
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        {questionData.relatedConcepts.map((concept) => (
-                          <span
-                            key={concept}
-                            className="px-2 py-1 bg-yellow-100 text-yellow-700 text-sm rounded"
-                          >
-                            {concept}
-                          </span>
-                        ))}
+                    {questionData.relatedConcepts.length > 0 && (
+                      <div className="mt-4 pt-4 border-t border-yellow-200">
+                        <h4 className="font-medium text-yellow-800 mb-2">
+                          Related Concepts:
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                          {questionData.relatedConcepts.map((concept) => (
+                            <span
+                              key={concept}
+                              className="px-2 py-1 bg-yellow-100 text-yellow-700 text-sm rounded"
+                            >
+                              {concept}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -483,7 +611,7 @@ export default function QuestionPractice({
                   </div>
                 </div>
 
-                {/* Progress */}
+                {/* Enhanced Progress */}
                 <div className="bg-white rounded-xl border border-gray-200 p-6">
                   <h3 className="text-lg font-semibold text-text mb-4">
                     Your Progress
@@ -502,16 +630,24 @@ export default function QuestionPractice({
                       </span>
                     </div>
                     {isSubmitted && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Result:</span>
-                        <span
-                          className={`font-medium ${
-                            isCorrect ? "text-green-600" : "text-red-600"
-                          }`}
-                        >
-                          {isCorrect ? "Correct" : "Incorrect"}
-                        </span>
-                      </div>
+                      <>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Result:</span>
+                          <span
+                            className={`font-medium ${
+                              isCorrect ? "text-green-600" : "text-red-600"
+                            }`}
+                          >
+                            {isCorrect ? "Correct" : "Incorrect"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Confidence:</span>
+                          <span className={`px-2 py-1 text-xs rounded-full ${getConfidenceColor(confidence)}`}>
+                            {confidence}
+                          </span>
+                        </div>
+                      </>
                     )}
                   </div>
                 </div>
@@ -549,21 +685,23 @@ export default function QuestionPractice({
                 </div>
 
                 {/* Tags */}
-                <div className="bg-white rounded-xl border border-gray-200 p-6">
-                  <h3 className="text-lg font-semibold text-text mb-4">
-                    Tags
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {questionData.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="px-2 py-1 bg-gray-50 text-gray-600 text-sm rounded"
-                      >
-                        #{tag}
-                      </span>
-                    ))}
+                {questionData.tags.length > 0 && (
+                  <div className="bg-white rounded-xl border border-gray-200 p-6">
+                    <h3 className="text-lg font-semibold text-text mb-4">
+                      Tags
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {questionData.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="px-2 py-1 bg-gray-50 text-gray-600 text-sm rounded"
+                        >
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </div>
