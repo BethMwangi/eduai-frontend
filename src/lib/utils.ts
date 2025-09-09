@@ -71,16 +71,6 @@ export const formatLastAccessed = (dateString: string): string => {
   return `${Math.floor(diffInMinutes / 1440)} days ago`;
 };
 
-/**
- * Get color class for score based on percentage
- * @param score Score percentage (0-100)
- * @returns Tailwind CSS text color class
- */
-export const getScoreColor = (score: number): string => {
-  if (score >= 90) return "text-green-600";
-  if (score >= 70) return "text-yellow-600";
-  return "text-red-600";
-};
 
 /**
  * Format percentage with proper rounding

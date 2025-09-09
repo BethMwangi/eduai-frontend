@@ -18,9 +18,7 @@ function mapJwtToUser(payload: JwtPayload): User | null {
   const first_name = payload.first_name || "";
   const last_name = payload.last_name || "";
   const full_name =
-    payload.full_name ||
-    `${first_name} ${last_name}`.trim() ||
-    undefined;
+    payload.full_name || `${first_name} ${last_name}`.trim() || undefined;
   return {
     id: payload.user_id ?? "",
     email: payload.email,
@@ -95,10 +93,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   useEffect(() => {
-    // No automatic bootstrap unless you persist refreshToken somewhere.
+    const access = localStorage.getItem("accessToken");
+    const refresh = localStorage.getItem("refreshToken");
+    if (access && refresh) {
+      setAccessToken(access);
+      setRefreshToken(refresh);
+      decodeAccess(access);
+    }
     setLoading(false);
   }, []);
-
   const login: AuthContextType["login"] = async (email, password) => {
     setLoading(true);
     try {
@@ -110,12 +113,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(
-          (err as { detail?: string; error?: string }).detail || (err as { detail?: string; error?: string }).error || "Login failed"
+          (err as { detail?: string; error?: string }).detail ||
+            (err as { detail?: string; error?: string }).error ||
+            "Login failed"
         );
       }
       const data: LoginResponse = await res.json();
       setAccessToken(data.access);
       setRefreshToken(data.refresh);
+      localStorage.setItem("accessToken", data.access);
+      localStorage.setItem("refreshToken", data.refresh);
       if (data.user) {
         setUser(data.user);
       } else {
@@ -142,10 +149,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         }),
       });
       if (!res.ok) {
-        const err: { detail?: string; error?: string } = await res.json().catch(() => ({}));
-        throw new Error(
-          err.detail || err.error || "Register failed"
-        );
+        const err: { detail?: string; error?: string } = await res
+          .json()
+          .catch(() => ({}));
+        throw new Error(err.detail || err.error || "Register failed");
       }
     } finally {
       setLoading(false);
@@ -161,6 +168,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         body: JSON.stringify({ refresh: refreshToken }),
       }).catch(() => {});
     }
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
     setAccessToken(null);
     setRefreshToken(null);
     setUser(null);

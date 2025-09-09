@@ -2,13 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import {
-  BarChart3,
-  User,
-  Award,
-  BookOpen,
-  Play,
-} from "lucide-react";
+import { BarChart3, User, Award, BookOpen, Play } from "lucide-react";
 import { UserComponentProps } from "@/types/auth";
 
 export type StudentSidebarPage =
@@ -21,13 +15,11 @@ export type StudentSidebarPage =
 interface StudentSidebarProps {
   user: UserComponentProps["user"];
   activePage?: StudentSidebarPage;
-  onViewChange?: (view: "dashboard" | "question-pool") => void;
 }
 
 export default function StudentSidebar({
   user,
   activePage = "dashboard",
-  onViewChange,
 }: StudentSidebarProps) {
   return (
     <div className="w-64 bg-white border-r border-gray-200 min-h-[calc(100vh-64px)]">
@@ -49,9 +41,9 @@ export default function StudentSidebar({
         </div>
 
         <nav className="space-y-2">
-          <button
-            onClick={() => onViewChange?.("dashboard")}
-            className={`flex items-center gap-3 px-4 py-3 w-full text-left rounded-lg transition-colors ${
+          <Link
+            href="/dashboard/student"
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
               activePage === "dashboard"
                 ? "bg-primary/10 text-primary font-medium"
                 : "text-gray-600 hover:bg-gray-50"
@@ -59,11 +51,11 @@ export default function StudentSidebar({
           >
             <BarChart3 className="w-5 h-5" />
             Dashboard
-          </button>
+          </Link>
 
-          <button
-            onClick={() => onViewChange?.("question-pool")}
-            className={`flex items-center gap-3 px-4 py-3 w-full text-left rounded-lg transition-colors ${
+          <Link
+            href="/student/question-pool"
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
               activePage === "question-pool"
                 ? "bg-primary/10 text-primary font-medium"
                 : "text-gray-600 hover:bg-gray-50"
@@ -71,7 +63,7 @@ export default function StudentSidebar({
           >
             <BookOpen className="w-5 h-5" />
             Question Pool
-          </button>
+          </Link>
 
           <Link
             href="/student/profile"
@@ -97,17 +89,17 @@ export default function StudentSidebar({
             Achievements
           </Link>
 
-      <Link
-  href="/student/practice/continue"
-  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-    activePage === "practice"
-      ? "bg-primary/10 text-primary font-medium"
-      : "text-gray-600 hover:bg-gray-50"
-  }`}
->
-  <Play className="w-5 h-5" />
-  Continue Practice
-</Link>
+          <Link
+            href="/student/practice/continue"
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+              activePage === "practice"
+                ? "bg-primary/10 text-primary font-medium"
+                : "text-gray-600 hover:bg-gray-50"
+            }`}
+          >
+            <Play className="w-5 h-5" />
+            Continue Practice
+          </Link>
         </nav>
       </div>
     </div>

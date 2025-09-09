@@ -1,7 +1,6 @@
 "use client";
 
 import { ReactNode } from "react";
-import DashboardNavbar from "./dashboard-navbar";
 import type { User } from "@/types/auth";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 interface DashboardLayoutProps {
@@ -26,7 +25,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <DashboardNavbar user={user} />
       <main className="flex-1">
         {typeof children === 'function' ? children(user) : children}
       </main>

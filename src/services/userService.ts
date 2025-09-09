@@ -1,10 +1,23 @@
 // src/services/userService.ts
 import { authFetch } from "@/lib/authFetch";
-import type { Student, User , ApiQuestionDetail, PracticeSession, PracticeSessionDetail, Grade, Subject , Level , AllSubjectsProgressResponse, SubjectProgress, TopicProgress} from "@/types/auth";
+import type {
+  Student,
+  ApiQuestionDetail,
+  PracticeSession,
+  PracticeSessionDetail,
+  Grade,
+  Subject,
+  Level,
+  AllSubjectsProgressResponse,
+  SubjectProgress,
+  TopicProgress,
+  QuestionSequenceParams,
+  SequenceResponse,
+  SubjectTopicsResponse,
+} from "@/types/auth";
 import type { ApiResponse } from "@/types/api";
 import { unwrapApi } from "@/types/api";
 import type { PaginatedPracticeSessions } from "@/types/auth";
-
 
 /**
  * Helper that fetches and unwraps potential ApiResponse<T> wrappers.
@@ -14,13 +27,16 @@ async function fetchAndUnwrap<T>(
   getValidAccessToken: () => Promise<string | null>,
   opts: RequestInit = {}
 ): Promise<T> {
-  const result = await authFetch<T | ApiResponse<T>>(path, opts, getValidAccessToken);
+  const result = await authFetch<T | ApiResponse<T>>(
+    path,
+    opts,
+    getValidAccessToken
+  );
   return unwrapApi(result);
 }
 
 export const userService = {
-
-   register: async (
+  register: async (
     email: string,
     password: string,
     role: string,
@@ -34,22 +50,23 @@ export const userService = {
         email,
         password,
         role,
-        first_name: firstName, 
+        first_name: firstName,
         last_name: lastName,
       }),
     });
 
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const message = (data && (data.error || data.detail)) || "Registration failed";
+      const message =
+        (data && (data.error || data.detail)) || "Registration failed";
       const err: Error & { data?: unknown } = new Error(message);
       err.data = data;
       throw err;
     }
-    return data; 
+    return data;
   },
   getProfile: (getValidAccessToken: () => Promise<string | null>) =>
-    fetchAndUnwrap<User>("/users/profile/", getValidAccessToken),
+    fetchAndUnwrap<Student>("/users/profile/", getValidAccessToken),
 
   addChild: (
     getValidAccessToken: () => Promise<string | null>,
@@ -63,26 +80,25 @@ export const userService = {
       password: string;
     }
   ) =>
-    fetchAndUnwrap<Student>(
-      "/users/add-child/",
-      getValidAccessToken,
-      {
-        method: "POST",
-        body: JSON.stringify(payload),
-      }
-    ),
+    fetchAndUnwrap<Student>("/users/add-child/", getValidAccessToken, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
 
   getGrades: (getValidAccessToken: () => Promise<string | null>) =>
     fetchAndUnwrap<Grade[]>("/academics/grades/", getValidAccessToken),
 
- getLevels: (getValidAccessToken: () => Promise<string | null>) =>
+  getLevels: (getValidAccessToken: () => Promise<string | null>) =>
     fetchAndUnwrap<Level[]>("/academics/levels/", getValidAccessToken),
 
   getGradesByLevel: (
     getValidAccessToken: () => Promise<string | null>,
     level: string
   ) =>
-    fetchAndUnwrap<Grade[]>(`/academics/levels/${encodeURIComponent(level)}/grades/`, getValidAccessToken),
+    fetchAndUnwrap<Grade[]>(
+      `/academics/levels/${encodeURIComponent(level)}/grades/`,
+      getValidAccessToken
+    ),
 
   getChildren: (getValidAccessToken: () => Promise<string | null>) =>
     fetchAndUnwrap<Student[]>("/users/my-children/", getValidAccessToken),
@@ -91,10 +107,7 @@ export const userService = {
     getValidAccessToken: () => Promise<string | null>,
     childId: number
   ) =>
-    fetchAndUnwrap<Student>(
-      `/users/children/${childId}/`,
-      getValidAccessToken
-    ),
+    fetchAndUnwrap<Student>(`/users/children/${childId}/`, getValidAccessToken),
 
   updateChild: (
     getValidAccessToken: () => Promise<string | null>,
@@ -123,29 +136,84 @@ export const userService = {
       subject_id?: number;
       difficulty?: "easy" | "medium" | "hard";
       page?: number;
+      page_size?: number;
     }
   ) => {
     const params = new URLSearchParams();
-    if (filters?.subject_id !== undefined)
+
+    if (
+      filters?.subject_id !== undefined &&
+      !isNaN(filters.subject_id) &&
+      filters.subject_id > 0
+    ) {
       params.set("subject_id", String(filters.subject_id));
-    if (filters?.difficulty) params.set("difficulty", filters.difficulty);
-    if (filters?.page !== undefined)
+    }
+
+    if (filters?.difficulty) {
+      params.set("difficulty", filters.difficulty);
+    }
+
+    if (filters?.page !== undefined && filters.page > 0) {
       params.set("page", String(filters.page));
+    }
+
+    if (filters?.page_size !== undefined && filters.page_size > 0) {
+      params.set("page_size", String(filters.page_size));
+    }
+
     const query = params.toString() ? `?${params.toString()}` : "";
+
     return fetchAndUnwrap<unknown>(
       `/questions/questions/grade_questions/${query}`,
       getValidAccessToken
     );
   },
 
-getQuestionById: (
-  getValidAccessToken: () => Promise<string | null>,
-  questionId: number
-) =>
-  fetchAndUnwrap<ApiQuestionDetail>(
-    `/questions/questions/${questionId}/`,
-    getValidAccessToken
-  ),
+  getSubjectsList: (
+    getValidAccessToken: () => Promise<string | null>,
+    gradeId?: number
+  ) => {
+    const params = new URLSearchParams();
+    if (gradeId) params.set("grade_id", String(gradeId));
+    const query = params.toString() ? `?${params.toString()}` : "";
+    return fetchAndUnwrap<Subject[]>(
+      `/academics/subjects/${query}`,
+      getValidAccessToken
+    );
+  },
+  
+  getQuestionSequence: (
+    getValidAccessToken: () => Promise<string | null>,
+    params: QuestionSequenceParams
+  ) => {
+    const queryParams = new URLSearchParams();
+    queryParams.append("index", params.index.toString());
+    if (params.subject_id)
+      queryParams.append("subject_id", params.subject_id.toString());
+    if (params.difficulty) queryParams.append("difficulty", params.difficulty);
+    if (params.grade_id)
+      queryParams.append("grade_id", params.grade_id.toString());
+
+    const url = `/questions/questions/sequence/?${queryParams.toString()}`;
+    return fetchAndUnwrap<SequenceResponse>(url, getValidAccessToken);
+  },
+
+  getQuestionById: (
+    getValidAccessToken: () => Promise<string | null>,
+    questionId: number
+  ) =>
+    fetchAndUnwrap<ApiQuestionDetail>(
+      `/questions/questions/${questionId}/`,
+      getValidAccessToken
+    ),
+
+      getSubjectTopics: (
+    getValidAccessToken: () => Promise<string | null>,
+    subjectId: number
+  ) => {
+    const url = `/questions/questions/topics/?subject_id=${subjectId}`;
+    return fetchAndUnwrap<SubjectTopicsResponse>(url, getValidAccessToken);
+  },
   recordQuestionAttempt: (
     getValidAccessToken: () => Promise<string | null>,
     data: {
@@ -165,10 +233,11 @@ getQuestionById: (
       }
     ),
 
-
-getActivePracticeSessions: (getValidAccessToken: () => Promise<string | null>) =>
+  getActivePracticeSessions: (
+    getValidAccessToken: () => Promise<string | null>
+  ) =>
     fetchAndUnwrap<PracticeSession[]>(
-      "/practice-sessions/active/",
+      "/questions/practice-sessions/active/",
       getValidAccessToken
     ),
 
@@ -177,7 +246,7 @@ getActivePracticeSessions: (getValidAccessToken: () => Promise<string | null>) =
     sessionId: number
   ) =>
     fetchAndUnwrap<PracticeSessionDetail>(
-      `/practice-sessions/${sessionId}/`,
+      `/questions/practice-sessions/${sessionId}/`,
       getValidAccessToken
     ),
 
@@ -196,7 +265,7 @@ getActivePracticeSessions: (getValidAccessToken: () => Promise<string | null>) =
     }
   ) =>
     fetchAndUnwrap<unknown>(
-      `/practice-sessions/${sessionId}/complete/`,
+      `/questions/practice-sessions/${sessionId}/complete/`,
       getValidAccessToken,
       {
         method: "POST",
@@ -211,9 +280,9 @@ getActivePracticeSessions: (getValidAccessToken: () => Promise<string | null>) =
     const params = new URLSearchParams();
     if (page !== undefined) params.set("page", String(page));
     const query = params.toString() ? `?${params.toString()}` : "";
-    
+
     return fetchAndUnwrap<PaginatedPracticeSessions>(
-      `/practice-sessions/completed/${query}`,
+      `/questions/practice-sessions/completed/${query}`,
       getValidAccessToken
     );
   },
@@ -225,10 +294,9 @@ getActivePracticeSessions: (getValidAccessToken: () => Promise<string | null>) =
   getGradeDetail: (
     getValidAccessToken: () => Promise<string | null>,
     gradeId: number
-  ) =>
-    fetchAndUnwrap<Grade>(`/grades/${gradeId}/`, getValidAccessToken),
+  ) => fetchAndUnwrap<Grade>(`/grades/${gradeId}/`, getValidAccessToken),
 
-  getSubjectsList: (getValidAccessToken: () => Promise<string | null>) =>
+  getAlSubjectsList: (getValidAccessToken: () => Promise<string | null>) =>
     fetchAndUnwrap<Subject[]>("/subjects/", getValidAccessToken),
 
   getSubjectsByGrade: (
@@ -239,7 +307,44 @@ getActivePracticeSessions: (getValidAccessToken: () => Promise<string | null>) =
       `/grades/${gradeId}/subjects/`,
       getValidAccessToken
     ),
-getSubjectProgress: (
+
+getSubjectQuestions: (
+    getValidAccessToken: () => Promise<string | null>,
+    subjectId: number,
+    page: number = 1
+  ) => {
+    const params = new URLSearchParams();
+    params.set("subject_id", subjectId.toString());
+    params.set("page", page.toString());
+    params.set("page_size", "100"); 
+    
+    return fetchAndUnwrap<unknown>(
+      `/questions/questions/grade_questions/?${params.toString()}`,
+      getValidAccessToken
+    );
+  },
+
+
+ getTopicQuestions: (
+  getValidAccessToken: () => Promise<string | null>,
+  params: {
+    subject_id: number;
+    topic: string;
+    difficulty?: string;
+    index?: number;
+  }
+) => {
+  const queryParams = new URLSearchParams();
+  queryParams.append("subject_id", params.subject_id.toString());
+  queryParams.append("topic", params.topic);
+  if (params.difficulty) queryParams.append("difficulty", params.difficulty);
+  queryParams.append("index", (params.index || 1).toString());
+  
+  const url = `/questions/questions/sequence/?${queryParams.toString()}`;
+  return fetchAndUnwrap<SequenceResponse>(url, getValidAccessToken);
+},
+
+  getSubjectProgress: (
     getValidAccessToken: () => Promise<string | null>,
     subjectId: number
   ) =>
@@ -255,15 +360,18 @@ getSubjectProgress: (
       getValidAccessToken
     ),
   // Get student question attempt stats by subject
-  getStudentStatsBySubject: (getValidAccessToken: () => Promise<string | null>) =>
-    fetchAndUnwrap<Array<{
-      subject_id: number;
-      subject_name: string;
-      subject_display_name: string;
-      total_attempts: number;
-      correct_attempts: number;
-      accuracy: number;
-      last_activity: string | null;
-    }>>("/questions/attempts/stats_by_subject/", getValidAccessToken),
-
+  getStudentStatsBySubject: (
+    getValidAccessToken: () => Promise<string | null>
+  ) =>
+    fetchAndUnwrap<
+      Array<{
+        subject_id: number;
+        subject_name: string;
+        subject_display_name: string;
+        total_attempts: number;
+        correct_attempts: number;
+        accuracy: number;
+        last_activity: string | null;
+      }>
+    >("/questions/attempts/stats_by_subject/", getValidAccessToken),
 };

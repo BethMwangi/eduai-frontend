@@ -33,13 +33,13 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import DashboardLayout from "@/components/dashboard/dashboard.layout";
 import StudentSidebar from "@/components/dashboard/student-sidebar";
-import { getDifficultyColor } from "@/utils/colorUtils";
 import {
   formatTimeSpent,
   formatLastAccessed,
-  getScoreColor,
   calculatePercentage,
 } from "@/lib/utils";
+import { getDifficultyColor, getScoreColor } from "@/utils/colorUtils";
+
 
 export default function ContinuePractice() {
   const { getValidAccessToken } = useAuth();
@@ -56,8 +56,7 @@ export default function ContinuePractice() {
     loadPracticeData();
   }, []);
 
-  const loadPracticeData = async () => {
-    try {
+  const loadPracticeData = async () => { try {
       setLoading(true);
       setError(null);
 

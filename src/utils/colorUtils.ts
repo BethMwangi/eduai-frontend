@@ -63,3 +63,17 @@ export const getQuestionTypeColor = (type: string) => {
       return "bg-gray-100 text-gray-700";
   }
 };
+
+
+
+/**
+ * Get color class for score based on percentage
+ * @param score Score percentage (0-100)
+ * @returns Tailwind CSS text color class
+ */
+export const getScoreColor = (score: number): string => {
+  if (score >= 90) return "text-green-600";
+  if (score >= 70) return "text-yellow-600";
+  return "text-red-600";
+};
+
