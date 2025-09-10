@@ -17,7 +17,8 @@ import {
   AlertCircle,
   HelpCircle,
 } from "lucide-react";
-import DashboardLayout from "@/components/dashboard/dashboard.layout";
+import DashboardLayout from "@/components/dashboard/dashboard-layout";
+import { getDifficultyColor } from "@/utils/colorUtils";
 
 export default function QuestionsBrowser() {
   const [viewMode, setViewMode] = useState<"questions" | "papers">("questions");
@@ -28,12 +29,7 @@ export default function QuestionsBrowser() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
 
-  const user = {
-    name: "Alex Smith",
-    email: "alex.smith@email.com",
-    role: "student",
-    avatar: "AS",
-  };
+
 
   const subjects = [
     "Mathematics",
@@ -222,18 +218,7 @@ export default function QuestionsBrowser() {
     );
   });
 
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case "Easy":
-        return "bg-green-100 text-green-600";
-      case "Medium":
-        return "bg-yellow-100 text-yellow-600";
-      case "Hard":
-        return "bg-red-100 text-red-600";
-      default:
-        return "bg-gray-100 text-gray-600";
-    }
-  };
+ 
 
   const getDifficultyIcon = (difficulty: string) => {
     switch (difficulty) {

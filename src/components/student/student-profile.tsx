@@ -18,7 +18,7 @@ import { userService } from "@/services/userService";
 
 import { useAuth } from "@/context/auth";
 import type { Student } from "@/types/auth";
-import DashboardLayout from "../dashboard/dashboard.layout";
+import DashboardLayout from "../dashboard/dashboard-layout";
 import StudentSidebar from "../dashboard/student-sidebar";
 
 export default function StudentProfile() {

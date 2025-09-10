@@ -18,10 +18,8 @@ import type {
 import type { ApiResponse } from "@/types/api";
 import { unwrapApi } from "@/types/api";
 import type { PaginatedPracticeSessions } from "@/types/auth";
+import type { ExamLite, ExamDetail, ExamPaperTaking } from "@/types/exams";
 
-/**
- * Helper that fetches and unwraps potential ApiResponse<T> wrappers.
- */
 async function fetchAndUnwrap<T>(
   path: string,
   getValidAccessToken: () => Promise<string | null>,
@@ -181,7 +179,7 @@ export const userService = {
       getValidAccessToken
     );
   },
-  
+
   getQuestionSequence: (
     getValidAccessToken: () => Promise<string | null>,
     params: QuestionSequenceParams
@@ -207,7 +205,7 @@ export const userService = {
       getValidAccessToken
     ),
 
-      getSubjectTopics: (
+  getSubjectTopics: (
     getValidAccessToken: () => Promise<string | null>,
     subjectId: number
   ) => {
@@ -308,7 +306,7 @@ export const userService = {
       getValidAccessToken
     ),
 
-getSubjectQuestions: (
+  getSubjectQuestions: (
     getValidAccessToken: () => Promise<string | null>,
     subjectId: number,
     page: number = 1
@@ -316,33 +314,32 @@ getSubjectQuestions: (
     const params = new URLSearchParams();
     params.set("subject_id", subjectId.toString());
     params.set("page", page.toString());
-    params.set("page_size", "100"); 
-    
+    params.set("page_size", "100");
+
     return fetchAndUnwrap<unknown>(
       `/questions/questions/grade_questions/?${params.toString()}`,
       getValidAccessToken
     );
   },
 
+  getTopicQuestions: (
+    getValidAccessToken: () => Promise<string | null>,
+    params: {
+      subject_id: number;
+      topic: string;
+      difficulty?: string;
+      index?: number;
+    }
+  ) => {
+    const queryParams = new URLSearchParams();
+    queryParams.append("subject_id", params.subject_id.toString());
+    queryParams.append("topic", params.topic);
+    if (params.difficulty) queryParams.append("difficulty", params.difficulty);
+    queryParams.append("index", (params.index || 1).toString());
 
- getTopicQuestions: (
-  getValidAccessToken: () => Promise<string | null>,
-  params: {
-    subject_id: number;
-    topic: string;
-    difficulty?: string;
-    index?: number;
-  }
-) => {
-  const queryParams = new URLSearchParams();
-  queryParams.append("subject_id", params.subject_id.toString());
-  queryParams.append("topic", params.topic);
-  if (params.difficulty) queryParams.append("difficulty", params.difficulty);
-  queryParams.append("index", (params.index || 1).toString());
-  
-  const url = `/questions/questions/sequence/?${queryParams.toString()}`;
-  return fetchAndUnwrap<SequenceResponse>(url, getValidAccessToken);
-},
+    const url = `/questions/questions/sequence/?${queryParams.toString()}`;
+    return fetchAndUnwrap<SequenceResponse>(url, getValidAccessToken);
+  },
 
   getSubjectProgress: (
     getValidAccessToken: () => Promise<string | null>,
@@ -374,4 +371,44 @@ getSubjectQuestions: (
         last_activity: string | null;
       }>
     >("/questions/attempts/stats_by_subject/", getValidAccessToken),
+
+  getExams: async (
+    getValidAccessToken: () => Promise<string | null>,
+    filters?: {
+      level?: string;
+      type?: string;
+      year?: string | number;
+      search?: string;
+    }
+  ) => {
+    const params = new URLSearchParams();
+    params.set("embed", "papers");
+
+    if (filters?.level && filters.level !== "all")
+      params.set("level", filters.level);
+    if (filters?.type && filters.type !== "all")
+      params.set("type", filters.type);
+    if (filters?.year && String(filters.year) !== "all")
+      params.set("year", String(filters.year));
+    if (filters?.search?.trim()) params.set("search", filters.search.trim());
+
+    const q = params.toString() ? `?${params.toString()}` : "";
+  const result = await fetchAndUnwrap<ExamLite[]>(`/exams/exams/${q}`, getValidAccessToken);
+  console.log("🔍 Exams API response:", result); // <-- Add this line
+  return result;
+},
+
+  getExamDetail: (
+    getValidAccessToken: () => Promise<string | null>,
+    examId: number
+  ) => fetchAndUnwrap<ExamDetail>(`/exams/${examId}/`, getValidAccessToken),
+
+  getPaperForTaking: (
+    getValidAccessToken: () => Promise<string | null>,
+    paperId: number
+  ) =>
+    fetchAndUnwrap<ExamPaperTaking>(
+      `/papers/${paperId}/taking/`,
+      getValidAccessToken
+    ),
 };

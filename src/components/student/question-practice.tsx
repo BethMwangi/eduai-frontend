@@ -19,7 +19,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import DashboardLayout from "../dashboard/dashboard.layout";
+import DashboardLayout from "../dashboard/dashboard-layout";
 import { userService } from "@/services/userService";
 import { useAuth } from "@/context/auth";
 import {

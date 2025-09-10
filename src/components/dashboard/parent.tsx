@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Plus, BookOpen, ArrowLeft } from "lucide-react";
-import DashboardLayout from "./dashboard.layout";
+import DashboardLayout from "./dashboard-layout";
 import AddChildForm from "@/components/forms/AddChildForm";
 import { userService } from "@/services/userService";
 import { Student } from "@/types/auth";

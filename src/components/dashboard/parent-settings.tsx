@@ -4,7 +4,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import {  User, Bell, Shield, Save, Eye, EyeOff, SettingsIcon, CreditCard , Check, Edit, X} from "lucide-react"
-import DashboardLayout from "./dashboard.layout"
+import DashboardLayout from "./dashboard-layout"
 import ParentSidebar from "./parent-sidebar"
 
 import type {CustomUser } from "@/types/auth"; // adjust path if needed

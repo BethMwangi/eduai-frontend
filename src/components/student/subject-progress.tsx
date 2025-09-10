@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/select";
 import { getDifficultyColor, getScoreColor } from "@/utils/colorUtils";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
-import DashboardLayout from "@/components/dashboard/dashboard.layout";
+import DashboardLayout from "@/components/dashboard/dashboard-layout";
 import StudentSidebar from "@/components/dashboard/student-sidebar";
 import { useAuth } from "@/context/auth";
 import { userService } from "@/services/userService";

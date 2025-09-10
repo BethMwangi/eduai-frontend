@@ -13,7 +13,7 @@ import {
   CheckCircle,
   Edit,
 } from "lucide-react";
-import DashboardLayout from "./dashboard.layout";
+import DashboardLayout from "./dashboard-layout";
 
 export default function TeacherDashboard() {
   //   const [activeTab, setActiveTab] = useState("overview")

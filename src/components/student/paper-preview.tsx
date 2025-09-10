@@ -1,7 +1,7 @@
 "use client"
 import Link from "next/link"
 import { ArrowLeft, Clock, BookOpen, Star, Play, CheckCircle } from "lucide-react"
-import DashboardLayout from "../dashboard/dashboard.layout"
+import DashboardLayout from "../dashboard/dashboard-layout"
 
 interface PaperPreviewProps {
   paperId: string

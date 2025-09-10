@@ -9,6 +9,7 @@ export type StudentSidebarPage =
   | "dashboard"
   | "question-pool"
   | "profile"
+  | "exams"
   | "achievements"
   | "practice";
 
@@ -63,6 +64,19 @@ export default function StudentSidebar({
           >
             <BookOpen className="w-5 h-5" />
             Question Pool
+          </Link>
+
+
+          <Link
+            href="/student/exams"
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+              activePage === "exams"
+                ? "bg-primary/10 text-primary font-medium"
+                : "text-gray-600 hover:bg-gray-50"
+            }`}
+          >
+            <BookOpen className="w-5 h-5" />
+            Past papers & Exams 
           </Link>
 
           <Link

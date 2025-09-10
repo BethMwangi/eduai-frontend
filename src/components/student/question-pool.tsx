@@ -37,6 +37,7 @@ import type {
   Subject,
 } from "@/types/auth";
 import { useRouter } from "next/navigation";
+import { getDifficultyColor } from "@/utils/colorUtils";
 
 export default function QuestionPool() {
   const { getValidAccessToken } = useAuth();
@@ -390,18 +391,6 @@ export default function QuestionPool() {
     {}
   );
 
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case "Easy":
-        return "bg-green-100 text-green-600";
-      case "Medium":
-        return "bg-yellow-100 text-yellow-600";
-      case "Hard":
-        return "bg-red-100 text-red-600";
-      default:
-        return "bg-gray-100 text-gray-600";
-    }
-  };
 
   const getTypeIcon = (item: any) => {
     if (contentMode === "questions") {

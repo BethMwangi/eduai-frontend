@@ -1,6 +1,6 @@
 "use client";
 
-import DashboardLayout from "@/components/dashboard/dashboard.layout";
+import DashboardLayout from "@/components/dashboard/dashboard-layout";
 import QuestionPool from "@/components/student/question-pool";
 
 export default function QuestionPoolPage() {

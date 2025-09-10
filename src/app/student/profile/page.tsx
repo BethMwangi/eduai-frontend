@@ -1,7 +1,7 @@
 "use client";
 
 import StudentProfile from "@/components/student/student-profile"
-import DashboardLayout from "@/components/dashboard/dashboard.layout";
+import DashboardLayout from "@/components/dashboard/dashboard-layout";
 import { useAuth } from "@/context/auth";
 
 

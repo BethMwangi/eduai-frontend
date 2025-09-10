@@ -5,14 +5,14 @@ import Link from "next/link";
 import {
   BookOpen,
   TrendingUp,
-  Award,
   Target,
   Filter,
   CheckCircle,
   Play,
   Loader,
+  FileText
 } from "lucide-react";
-import DashboardLayout from "./dashboard.layout";
+import DashboardLayout from "./dashboard-layout";
 import { IconComponentCard } from "../cards/IconComponentCard";
 import StudentSidebar from "./student-sidebar";
 import { SubjectProgressData } from "@/types/auth";
@@ -130,14 +130,23 @@ export default function StudentDashboard() {
       count: "3 In Progress",
       badge: null,
     },
-    {
-      title: "View Achievements",
-      description: "Check your badges and milestones",
-      icon: Award,
-      href: "/student/achievements",
+    // {
+    //   title: "View Achievements",
+    //   description: "Check your badges and milestones",
+    //   icon: Award,
+    //   href: "/student/achievements",
+    //   color: "bg-secondary",
+    //   count: "12 Earned",
+    //   badge: "2 new badges!",
+    // },
+      {
+      title: "Past Papers & Exams",
+      description: "Access KCSE, KCPE and mock exam papers",
+      icon: FileText,
+      href: "/student/exams",
       color: "bg-secondary",
-      count: "12 Earned",
-      badge: "2 new badges!",
+      count: "50+ Papers",
+      badge: "KCSE 2023 added!",
     },
   ];
 
