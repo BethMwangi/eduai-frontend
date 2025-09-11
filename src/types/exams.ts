@@ -104,7 +104,7 @@ export type PaperQuestionForTaking = {
 
 export type ExamPaperTaking = {
   id: number;
-  exam: { title: string; year: number; source: string | null };
+  exam: { title: string; year: number; exam_type: string; source: string | null };
   subject: { display_name: string };
   paper_code: string;
   duration_minutes: number | null;

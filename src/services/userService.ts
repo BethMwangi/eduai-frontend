@@ -387,16 +387,18 @@ export const userService = {
     if (filters?.level && filters.level !== "all")
       params.set("level", filters.level);
     if (filters?.type && filters.type !== "all")
-      params.set("type", filters.type);
+      params.set("exam_type", filters.type);
     if (filters?.year && String(filters.year) !== "all")
       params.set("year", String(filters.year));
     if (filters?.search?.trim()) params.set("search", filters.search.trim());
 
     const q = params.toString() ? `?${params.toString()}` : "";
-  const result = await fetchAndUnwrap<ExamLite[]>(`/exams/exams/${q}`, getValidAccessToken);
-  console.log("🔍 Exams API response:", result); // <-- Add this line
-  return result;
-},
+    const result = await fetchAndUnwrap<ExamLite[]>(
+      `/exams/exams/${q}`,
+      getValidAccessToken
+    );
+    return result;
+  },
 
   getExamDetail: (
     getValidAccessToken: () => Promise<string | null>,
@@ -408,7 +410,7 @@ export const userService = {
     paperId: number
   ) =>
     fetchAndUnwrap<ExamPaperTaking>(
-      `/papers/${paperId}/taking/`,
+      `/exams/papers/${paperId}/taking/`,
       getValidAccessToken
     ),
 };

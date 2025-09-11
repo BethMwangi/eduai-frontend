@@ -64,8 +64,6 @@ export const getQuestionTypeColor = (type: string) => {
   }
 };
 
-
-
 /**
  * Get color class for score based on percentage
  * @param score Score percentage (0-100)
@@ -77,3 +75,17 @@ export const getScoreColor = (score: number): string => {
   return "text-red-600";
 };
 
+export const getExamTypeColor = (type: string) => {
+  switch (type) {
+    case "MAIN":
+      return "bg-red-500";
+    case "MOCK":
+      return "bg-blue-500";
+    case "CAT":
+      return "bg-green-500";
+    case "REVISION":
+      return "bg-purple-500";
+    default:
+      return "bg-gray-500";
+  }
+};
