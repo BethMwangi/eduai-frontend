@@ -230,7 +230,6 @@ export const userService = {
         body: JSON.stringify(data),
       }
     ),
-
   getActivePracticeSessions: (
     getValidAccessToken: () => Promise<string | null>
   ) =>
@@ -399,6 +398,31 @@ export const userService = {
     );
     return result;
   },
+  submitExam: async (
+    getValidAccessToken: () => Promise<string | null>,
+    paperId: number,
+    answers: Record<number, number>,
+    timeSpent: number
+  ) => {
+    const payload = {
+      answers, // { question_id: selected_option_index }
+      time_spent: timeSpent,
+    };
+
+    return fetchAndUnwrap<{
+      status: string;
+      total_questions: number;
+      correct_answers: number;
+      score_percent: number;
+      time_spent: number;
+    }>(`/exams/exam-papers/${paperId}/submit/`, getValidAccessToken, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+  },
 
   getExamDetail: (
     getValidAccessToken: () => Promise<string | null>,
@@ -413,4 +437,93 @@ export const userService = {
       `/exams/papers/${paperId}/taking/`,
       getValidAccessToken
     ),
+
+  getExamResults: (
+    getValidAccessToken: () => Promise<string | null>,
+    paperId: number
+  ) =>
+    fetchAndUnwrap<{
+      exam_paper: {
+        id: number;
+        title: string;
+        year: number;
+        level: string;
+        exam_type: string;
+      };
+      submission: {
+        is_submitted: boolean;
+        submitted_at: string | null;
+        score_percent: number;
+        time_spent: number;
+        total_questions: number;
+        correct_answers: number;
+        attempted: number;
+        unattempted: number;
+      };
+      question_results: Array<{
+        id: string;
+        order: number;
+        question_text: string;
+        marks: number;
+        difficulty: string;
+        user_answer: number | null;
+        correct_answer: number;
+        is_correct: boolean;
+        is_attempted: boolean;
+        options: string[];
+      }>;
+    }>(`/exams/papers/${paperId}/results/`, getValidAccessToken),
+
+  getStudentDashboardData: (
+    getValidAccessToken: () => Promise<string | null>
+  ) =>
+    fetchAndUnwrap<{
+      child_info: {
+        id: number;
+        name: string;
+        email: string;
+        grade: string | null;
+        school_name: string;
+        county: string;
+        current_streak: number;
+        longest_streak: number;
+        last_activity: string | null;
+      };
+      overall_metrics: {
+        total_subjects: number;
+        total_questions_attempted: number;
+        total_correct_answers: number;
+        overall_average_score: number;
+        current_streak_days: number;
+        longest_streak_days: number;
+      };
+      subjects: Array<{
+        subject_id: number;
+        subject_name: string;
+        category: string;
+        questions_attempted: number;
+        correct_answers: number;
+        average_score: number;
+        last_activity: string | null;
+        enrolled_date: string;
+      }>;
+      recent_activity: Array<{
+        subject: string;
+        question_id: number;
+        is_correct: boolean;
+        confidence: string;
+        timestamp: string;
+      }>;
+    }>("/users/profile/dashboard/", getValidAccessToken),
+
+  getStudentActivity: (getValidAccessToken: () => Promise<string | null>) =>
+    fetchAndUnwrap<
+      Array<{
+        subject: string;
+        question_id: number;
+        is_correct: boolean;
+        confidence: string;
+        timestamp: string;
+      }>
+    >("/users/activity/", getValidAccessToken),
 };

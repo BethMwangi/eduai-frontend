@@ -259,23 +259,17 @@ export default function QuestionPractice({
     try {
       const submitData = {
         question_id: Number(questionId),
-        selected_option: selectedLetter, // Submit letter directly, no conversion
-        confidence: confidence, // Use "Sure" or "Not Sure"
+        selected_option: selectedLetter, 
+        confidence: confidence, 
         self_explanation: selfExplanation.trim() || undefined,
         asked_ai_help: showTips,
       };
 
-      console.log("📤 Sending to backend:", submitData);
-
       await userService.recordQuestionAttempt(getValidAccessToken, submitData);
-
-      // Success feedback
-      console.log("✅ Question attempt recorded successfully!");
     } catch (err) {
       console.error("❌ Error recording attempt:", err);
       setSubmitError("Failed to save your answer. Please try again.");
 
-      // Reset submission state so user can retry
       setIsSubmitted(false);
       setShowExplanation(false);
     } finally {
@@ -323,7 +317,6 @@ export default function QuestionPractice({
       if (nextSequence.results && nextSequence.results.length > 0) {
         const nextQuestionId = nextSequence.results[0].id;
 
-        // Update URL parameters
         urlParams.set("index", nextIndex.toString());
 
         // Navigate to the next question using the correct route format

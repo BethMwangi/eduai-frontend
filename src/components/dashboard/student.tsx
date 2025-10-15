@@ -10,11 +10,10 @@ import {
   CheckCircle,
   Play,
   Loader,
-  FileText
+  FileText,
 } from "lucide-react";
 import DashboardLayout from "./dashboard-layout";
 import { IconComponentCard } from "../cards/IconComponentCard";
-import StudentSidebar from "./student-sidebar";
 import { SubjectProgressData } from "@/types/auth";
 import { userService } from "@/services/userService";
 import { useAuth } from "@/context/auth";
@@ -33,15 +32,29 @@ export default function StudentDashboard() {
     streakDays: 0,
   });
 
+  const [recentActivity, setRecentActivity] = useState<
+    Array<{
+      subject: string;
+      quiz: string;
+      score: number;
+      date: string;
+      questions: number;
+    }>
+  >([]);
+
   const loadStudentData = useCallback(async () => {
     if (!user || !getValidAccessToken) return;
 
     setLoading(true);
     try {
       // Load student stats by subject
+      const profile = await userService.getProfile(getValidAccessToken);
+      console.log("Fetched profile data:", profile);
+
       const statsData = await userService.getStudentStatsBySubject(
         getValidAccessToken
       );
+      console.log("Fetched stats data:", statsData);
 
       // Calculate overall stats
       const totalAttempts = statsData.reduce(
@@ -64,7 +77,7 @@ export default function StudentDashboard() {
         totalQuestions: totalAttempts,
         correctAnswers: totalCorrect,
         averageScore: averageAccuracy,
-        streakDays: 12, // This would come from student profile
+        streakDays: profile.current_streak_days || 0,
       });
 
       // Transform and set subject progress
@@ -74,6 +87,24 @@ export default function StudentDashboard() {
       }));
 
       setSubjectProgress(transformedProgress);
+
+      try {
+        const activity = await userService.getStudentActivity(
+          getValidAccessToken
+        );
+        const transformedActivity = activity.slice(0, 3).map((attempt) => ({
+          subject: attempt.subject,
+          quiz: `Question ${attempt.question_id}`,
+          score: attempt.is_correct ? 100 : 0,
+          date: formatLastActivity(attempt.timestamp),
+          questions: 1,
+        }));
+        setRecentActivity(transformedActivity);
+      } catch (error) {
+        console.warn("Failed to load recent activity:", error);
+        // Keep empty array if no activity data
+        setRecentActivity([]);
+      }
     } catch (error) {
       console.error("Failed to load student data:", error);
     } finally {
@@ -139,7 +170,7 @@ export default function StudentDashboard() {
     //   count: "12 Earned",
     //   badge: "2 new badges!",
     // },
-      {
+    {
       title: "Past Papers & Exams",
       description: "Access KCSE, KCPE and mock exam papers",
       icon: FileText,
@@ -150,50 +181,30 @@ export default function StudentDashboard() {
     },
   ];
 
-  const recentActivity = [
-    {
-      subject: "Mathematics",
-      quiz: "Linear Algebra Basics",
-      score: 92,
-      date: "2 hours ago",
-      questions: 25,
-    },
-    {
-      subject: "Physics",
-      quiz: "Motion & Forces",
-      score: 78,
-      date: "1 day ago",
-      questions: 30,
-    },
-    {
-      subject: "Chemistry",
-      quiz: "Periodic Table",
-      score: 95,
-      date: "2 days ago",
-      questions: 20,
-    },
-  ];
+  // const recentActivity = [
+  //   {
+  //     subject: "Mathematics",
+  //     quiz: "Linear Algebra Basics",
+  //     score: 92,
+  //     date: "2 hours ago",
+  //     questions: 25,
+  //   },
+  //   {
+  //     subject: "Physics",
+  //     quiz: "Motion & Forces",
+  //     score: 78,
+  //     date: "1 day ago",
+  //     questions: 30,
+  //   },
+  //   {
+  //     subject: "Chemistry",
+  //     quiz: "Periodic Table",
+  //     score: 95,
 
-  const upcomingTests = [
-    {
-      subject: "Mathematics",
-      title: "Calculus Final",
-      date: "Tomorrow",
-      difficulty: "Hard",
-    },
-    {
-      subject: "Physics",
-      title: "Mechanics Quiz",
-      date: "Dec 15",
-      difficulty: "Medium",
-    },
-    {
-      subject: "Chemistry",
-      title: "Organic Chemistry",
-      date: "Dec 18",
-      difficulty: "Hard",
-    },
-  ];
+  //     date: "2 days ago",
+  //     questions: 20,
+  //   },
+  // ];
 
   const achievements = [
     {
@@ -240,7 +251,6 @@ export default function StudentDashboard() {
           </div>
 
           <div className="flex">
-            <StudentSidebar user={layoutUser} activePage="dashboard" />
             <div className="flex-1 p-6 bg-gray-50">
               {/* Dashboard content */}
               <div className="mb-8">
@@ -482,36 +492,48 @@ export default function StudentDashboard() {
                       Recent Activity
                     </h3>
                     <div className="space-y-4">
-                      {recentActivity.map((activity, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center gap-3 p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors"
-                        >
-                          <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                            <BookOpen className="w-4 h-4 text-primary" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-text text-sm truncate">
-                              {activity.quiz}
-                            </h4>
-                            <p className="text-xs text-gray-500">
-                              {activity.subject} • {activity.questions} •{" "}
-                              {activity.date}
-                            </p>
-                          </div>
+                      {recentActivity.length > 0 ? (
+                        recentActivity.map((activity, index) => (
                           <div
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              activity.score >= 90
-                                ? "bg-accent/10 text-accent"
-                                : activity.score >= 70
-                                ? "bg-secondary/10 text-secondary"
-                                : "bg-red-100 text-red-600"
-                            }`}
+                            key={index}
+                            className="flex items-center gap-3 p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors"
                           >
-                            {activity.score}%
+                            <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                              <BookOpen className="w-4 h-4 text-primary" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium text-text text-sm truncate">
+                                {activity.quiz}
+                              </h4>
+                              <p className="text-xs text-gray-500">
+                                {activity.subject} • {activity.questions} •{" "}
+                                {activity.date}
+                              </p>
+                            </div>
+                            <div
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                activity.score >= 90
+                                  ? "bg-accent/10 text-accent"
+                                  : activity.score >= 70
+                                  ? "bg-secondary/10 text-secondary"
+                                  : "bg-red-100 text-red-600"
+                              }`}
+                            >
+                              {activity.score}%
+                            </div>
                           </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-4">
+                          <BookOpen className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                          <p className="text-sm text-gray-500">
+                            No recent activity
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            Start practicing to see your activity here
+                          </p>
                         </div>
-                      ))}
+                      )}
                     </div>
                     <Link
                       href="/student/history"
@@ -519,41 +541,6 @@ export default function StudentDashboard() {
                     >
                       View All Activity →
                     </Link>
-                  </div>
-
-                  {/* Upcoming Tests */}
-                  <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                    <h3 className="text-lg font-semibold text-text mb-4">
-                      Upcoming Tests
-                    </h3>
-                    <div className="space-y-3">
-                      {upcomingTests.map((test, index) => (
-                        <div
-                          key={index}
-                          className="p-3 border border-gray-100 rounded-lg"
-                        >
-                          <div className="flex items-center justify-between mb-1">
-                            <h4 className="font-medium text-text text-sm">
-                              {test.title}
-                            </h4>
-                            <span
-                              className={`px-2 py-1 rounded-full text-xs ${
-                                test.difficulty === "Hard"
-                                  ? "bg-red-100 text-red-600"
-                                  : test.difficulty === "Medium"
-                                  ? "bg-secondary/10 text-secondary"
-                                  : "bg-accent/10 text-accent"
-                              }`}
-                            >
-                              {test.difficulty}
-                            </span>
-                          </div>
-                          <p className="text-xs text-gray-500">
-                            {test.subject} • {test.date}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
                   </div>
 
                   {/* Recent Achievements */}

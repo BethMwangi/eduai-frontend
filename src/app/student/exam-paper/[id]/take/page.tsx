@@ -7,5 +7,5 @@ interface ExamTakePageProps {
 }
 
 export default function ExamTakePage({ params }: ExamTakePageProps) {
-  return <ExamTakingInterface paperId={params.id} />
+  return <ExamTakingInterface paperId={params.id} />;
 }

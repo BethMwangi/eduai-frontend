@@ -32,7 +32,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import DashboardLayout from "@/components/dashboard/dashboard-layout";
-import StudentSidebar from "@/components/dashboard/student-sidebar";
 import {
   formatTimeSpent,
   formatLastAccessed,
@@ -237,14 +236,7 @@ export default function ContinuePractice() {
             </div>
           </div>
 
-          <div className="flex">
-            {/* Student Sidebar */}
-            <StudentSidebar
-              user={user}
-              activePage="practice"
-              onViewChange={() => {}}
-            />
-
+          <div className="flex">          
             <div className="flex-1 p-6 bg-gray-50">
               {/* Stats Overview */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">

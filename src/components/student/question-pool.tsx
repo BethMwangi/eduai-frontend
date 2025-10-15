@@ -947,7 +947,7 @@ export default function QuestionPool() {
                                               item.id
                                             }/practice?${params.toString()}`;
                                           })()
-                                        : `/student/exam/${item.id}/take`
+                                        : `/student/exam-paper/${item.id}`
                                     }
                                     className="flex items-center gap-1 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm"
                                   >
@@ -1031,7 +1031,7 @@ export default function QuestionPool() {
                           ? `/student/question/${
                               (previewItem as IndividualQuestion).id
                             }/practice}`
-                          : `/student/exam/${item.id}/take`
+                          : `/student/exam-paper/${item.id}/take`
                       }
                       className="flex items-center gap-1 px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition-colors"
                     >

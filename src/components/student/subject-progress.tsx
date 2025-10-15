@@ -34,7 +34,7 @@ import {
 import { getDifficultyColor, getScoreColor } from "@/utils/colorUtils";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import DashboardLayout from "@/components/dashboard/dashboard-layout";
-import StudentSidebar from "@/components/dashboard/student-sidebar";
+import StudentSidebar from "@/components/dashboard/dashboard-navbar";
 import { useAuth } from "@/context/auth";
 import { userService } from "@/services/userService";
 import type { Subject, SubjectProgress, TopicProgress } from "@/types/auth";
@@ -208,7 +208,6 @@ function SubjectProgressContent({ subject }: SubjectProgressProps) {
       <DashboardLayout>
         {(user) => (
           <div className="flex">
-            <StudentSidebar user={user} activePage="dashboard" />
             <div className="flex-1 min-h-screen bg-gray-50 flex items-center justify-center">
               <div className="text-center">
                 <Loader className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
@@ -230,7 +229,6 @@ if (error || profileError) {
     <DashboardLayout>
       {(user) => (
         <div className="flex">
-          <StudentSidebar user={user} activePage="dashboard" />
           <div className="flex-1 min-h-screen bg-gray-50 flex items-center justify-center">
             <div className="text-center">
               <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">

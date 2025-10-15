@@ -19,7 +19,6 @@ import { userService } from "@/services/userService";
 import { useAuth } from "@/context/auth";
 import type { Student } from "@/types/auth";
 import DashboardLayout from "../dashboard/dashboard-layout";
-import StudentSidebar from "../dashboard/student-sidebar";
 
 export default function StudentProfile() {
   const { getValidAccessToken } = useAuth();
@@ -157,11 +156,8 @@ export default function StudentProfile() {
     <DashboardLayout>
       {(layoutUser) => (
         <div>
-    
-
           {/* Shell with sidebar + content (same structure as dashboard) */}
           <div className="flex">
-            <StudentSidebar user={layoutUser} activePage="profile" />
 
             <div className="flex-1 p-6 bg-gray-50">
               {/* Profile Information */}
@@ -172,15 +168,6 @@ export default function StudentProfile() {
                       <h2 className="text-xl font-semibold text-text">
                         Basic Information
                       </h2>
-                      <button
-                        onClick={() =>
-                          isEditing ? handleSave() : setIsEditing(true)
-                        }
-                        className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-                      >
-                        <Edit className="w-4 h-4" />
-                        {isEditing ? "Save Changes" : "Edit Profile"}
-                      </button>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -309,6 +296,17 @@ export default function StudentProfile() {
                           </div>
                         )}
                       </div>
+                    </div>
+                    <div className="flex justify-end mt-6">
+                      <button
+                        onClick={() =>
+                          isEditing ? handleSave() : setIsEditing(true)
+                        }
+                        className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                      >
+                        <Edit className="w-4 h-4" />
+                        {isEditing ? "Save Changes" : "Edit Profile"}
+                      </button>
                     </div>
                   </div>
 
