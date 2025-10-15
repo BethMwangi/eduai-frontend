@@ -6,13 +6,12 @@ import {
   ChevronDown,
   Settings,
   Users,
-  User,
   MessageCircle,
   LogOut,
 } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/context/auth";
-import { Student } from "@/types/auth";
+import { User } from "@/types/auth";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 
@@ -23,7 +22,7 @@ interface MenuItem {
 }
 
 interface DashboardNavbarProps {
-  user: Student;
+  user: User;
 }
 
 export default function DashboardNavbar({ user }: DashboardNavbarProps) {
@@ -67,12 +66,11 @@ export default function DashboardNavbar({ user }: DashboardNavbarProps) {
         { title: "County Mock Exams", href: "/student/exams/county-mock" },
       ],
     },
-    { title: "Achievements", href: "/student/achievements" },
     { title: "Continue Practice", href: "/student/practice/continue" },
   ];
 
   const profileMenuItems = [
-    { title: "Profile", href: "/student/profile", icon: User },
+    { title: "Profile", href: "/student/profile", icon: Users },
     { title: "Settings", href: "/student/settings", icon: Settings },
     { title: "Refer Friends", href: "/student/refer", icon: Users },
     { title: "Contact Us", href: "/contact", icon: MessageCircle },

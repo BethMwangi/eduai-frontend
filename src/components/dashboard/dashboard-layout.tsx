@@ -21,7 +21,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   if (!user) {
-    // redirect is in the hook; avoid rendering anything while that's happening
     return null;
   }
 
