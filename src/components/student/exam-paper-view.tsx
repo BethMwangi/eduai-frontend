@@ -14,7 +14,6 @@ import {
   AlertCircle,
 } from "lucide-react"
 import { Button } from "@/components/common/Button";
-import DashboardLayout from "@/components/dashboard/dashboard-layout";
 import { useAuth } from "@/context/auth";
 import { userService } from "@/services/userService";
 import type { ExamPaperTaking } from "@/types/exams";
@@ -60,8 +59,7 @@ export default function ExamPaperView() {
 
 
   return (
-    <DashboardLayout>
-        {(user) => (
+  
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
         <div className="bg-white border-b border-gray-200 px-6 py-6">
@@ -201,7 +199,6 @@ export default function ExamPaperView() {
             </div>
           )}
         </div>
-      )}
-    </DashboardLayout>
+
   );
 }

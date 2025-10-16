@@ -89,7 +89,7 @@ export default function PaperPreview({ paperId }: PaperPreviewProps) {
   }
 
   return (
-    <DashboardLayout user={user}>
+    <DashboardLayout>
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center gap-4">
           <Link

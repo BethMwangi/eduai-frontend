@@ -1,4 +1,5 @@
 import ExamTakingInterface from "@/components/student/exam-taking-interface"
+import DashboardLayout from "@/components/dashboard/dashboard-layout";
 
 interface ExamTakePageProps {
   params: {
@@ -7,5 +8,9 @@ interface ExamTakePageProps {
 }
 
 export default function ExamTakePage({ params }: ExamTakePageProps) {
-  return <ExamTakingInterface paperId={params.id} />;
+  return (
+    <DashboardLayout>
+      <ExamTakingInterface paperId={params.id} />
+    </DashboardLayout>
+  );
 }

@@ -35,13 +35,7 @@ export default function ExamTakingInterface({ paperId }: Props) {
 
   // Timer
   const [timeRemaining, setTimeRemaining] = useState(0);
-  const [submissionResult, setSubmissionResult] = useState<null | {
-    status: string;
-    total_questions: number;
-    correct_answers: number;
-    score_percent: number;
-    time_spent: number;
-  }>(null);
+ 
 
   // Load paper from API
   useEffect(() => {
@@ -166,7 +160,6 @@ export default function ExamTakingInterface({ paperId }: Props) {
         formattedAnswers,
         timeSpent
       );
-      setSubmissionResult(result);
 
       router.push(`/student/exam-paper/${paperId}/results`);
     } catch (error) {

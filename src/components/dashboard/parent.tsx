@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Plus, BookOpen, ArrowLeft } from "lucide-react";
-import DashboardLayout from "./dashboard-layout";
 import AddChildForm from "@/components/forms/AddChildForm";
 import { userService } from "@/services/userService";
 import { Student } from "@/types/auth";
@@ -89,8 +88,7 @@ export default function ParentDashboard() {
   ];
 
   return (
-    <DashboardLayout>
-      {(layoutUser) => (
+   
         <div>
           {/* Header */}
           <div className="bg-white border-b border-gray-200 px-6 py-4">
@@ -142,7 +140,7 @@ export default function ParentDashboard() {
 
           <div className="flex">
             {/* Sidebar */}
-            <ParentSidebar user={layoutUser} activePage="dashboard" />
+            {/* <ParentSidebar user={layoutUser} activePage="dashboard" /> */}
 
             {/* Main Content */}
             <div className="flex-1 p-6">
@@ -287,7 +285,6 @@ export default function ParentDashboard() {
             </div>
           </div>
         </div>
-      )}
-    </DashboardLayout>
+ 
   );
 }

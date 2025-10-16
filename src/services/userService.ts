@@ -472,7 +472,7 @@ export const userService = {
         is_attempted: boolean;
         options: string[];
       }>;
-    }>(`/exams/papers/${paperId}/results/`, getValidAccessToken),
+    }>(`/exams/exam-papers/${paperId}/results/`, getValidAccessToken),
 
   getStudentDashboardData: (
     getValidAccessToken: () => Promise<string | null>

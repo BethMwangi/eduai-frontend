@@ -119,6 +119,7 @@ export interface ApiQuestion {
     maximum_age: number | null;
     is_active: boolean;
   };
+  topic: string;
   question_type: string;
   question_text: string;
   options: Record<string, string>;

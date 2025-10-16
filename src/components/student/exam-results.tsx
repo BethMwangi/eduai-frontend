@@ -45,14 +45,25 @@ export default function ExamResults({ paperId }: ExamResultsProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
+
     const loadResults = async () => {
-      const data = await userService.getExamResults(
-        getValidAccessToken,
-        paperId
-      );
-      setExamResults(data);
+      try {
+        setLoading(true);
+        const data = await userService.getExamResults(
+          getValidAccessToken,
+          Number(paperId) 
+        );
+        if (!cancelled) setExamResults(data);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     };
+
     loadResults();
+    return () => {
+      cancelled = true;
+    };
   }, [getValidAccessToken, paperId]);
 
   if (loading || !examResults) {

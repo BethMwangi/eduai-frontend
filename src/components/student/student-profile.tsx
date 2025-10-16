@@ -264,7 +264,7 @@ export default function StudentProfile() {
                       </label>
                       <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
                         <School className="w-4 h-4 text-gray-500" />
-                        <span className="text-text">{profileData.grade}</span>
+                        <span className="text-text">{profileData.grade_name}</span>
                       </div>
                     </div>
 

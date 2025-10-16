@@ -1,12 +1,11 @@
 "use client";
 
 import { ReactNode } from "react";
-import type { User } from "@/types/auth";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import DashboardNavbar from "./dashboard-navbar";
 
 interface DashboardLayoutProps {
-  children: (user: User) => ReactNode;
+  children: ReactNode;
 }
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
@@ -24,11 +23,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     return null;
   }
 
+
   return (
     <div className="min-h-screen bg-background">
       <DashboardNavbar user={user} />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {typeof children === "function" ? children(user) : children}
+        {children}
       </main>
     </div>
   );

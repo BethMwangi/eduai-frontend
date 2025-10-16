@@ -66,7 +66,7 @@ export default function TeacherDashboard() {
 
   return (
     <DashboardLayout>
-      {(layoutUser) => (
+   
         <>
           {/* Header */}
           <div className="bg-white border-b border-gray-200 px-6 py-4">
@@ -348,7 +348,7 @@ export default function TeacherDashboard() {
             </div>
           </div>
         </>
-      )}
+
     </DashboardLayout>
   );
 }

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -31,7 +30,6 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import DashboardLayout from "@/components/dashboard/dashboard-layout";
 import {
   formatTimeSpent,
   formatLastAccessed,
@@ -39,9 +37,8 @@ import {
 } from "@/lib/utils";
 import { getDifficultyColor, getScoreColor } from "@/utils/colorUtils";
 
-
 export default function ContinuePractice() {
-  const { getValidAccessToken } = useAuth();
+  const { getValidAccessToken, user } = useAuth();
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
   const [activeSessions, setActiveSessions] = useState<PracticeSession[]>([]);
   const [completedSessions, setCompletedSessions] = useState<
@@ -55,7 +52,8 @@ export default function ContinuePractice() {
     loadPracticeData();
   }, []);
 
-  const loadPracticeData = async () => { try {
+  const loadPracticeData = async () => {
+    try {
       setLoading(true);
       setError(null);
 
@@ -92,17 +90,23 @@ export default function ContinuePractice() {
 
   // Helper functions for safe property access
   const getSubjectName = (session: PracticeSession): string => {
-    if (typeof session.subject === 'string') {
+    if (typeof session.subject === "string") {
       return session.subject;
     }
-    return session.subject?.name || session.subject?.display_name || 'Unknown Subject';
+    return (
+      session.subject?.name ||
+      session.subject?.display_name ||
+      "Unknown Subject"
+    );
   };
 
   const getCompletedQuestions = (session: PracticeSession): number => {
     return session.questions_completed || session.questions_completed || 0;
   };
 
-  const getCurrentScore = (session: PracticeSession | CompletedPracticeSession): number => {
+  const getCurrentScore = (
+    session: PracticeSession | CompletedPracticeSession
+  ): number => {
     return session.current_score || session.score || 0;
   };
 
@@ -110,12 +114,16 @@ export default function ContinuePractice() {
     return session.final_score || session.current_score || session.score || 0;
   };
 
-  const getTimeSpent = (session: PracticeSession | CompletedPracticeSession): number => {
+  const getTimeSpent = (
+    session: PracticeSession | CompletedPracticeSession
+  ): number => {
     return session.time_spent || session.time_spent_seconds || 0;
   };
 
-  const getDifficulty = (session: PracticeSession | CompletedPracticeSession): string => {
-    return session.difficulty || 'medium';
+  const getDifficulty = (
+    session: PracticeSession | CompletedPracticeSession
+  ): string => {
+    return session.difficulty || "medium";
   };
 
   // Calculate stats from real data
@@ -156,24 +164,21 @@ export default function ContinuePractice() {
   // Loading state
   if (loading) {
     return (
-      <DashboardLayout>
-        {() => (
-          <div className="flex items-center justify-center min-h-[60vh]">
-            <div className="text-center">
-              <Loader className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
-              <p className="text-gray-600">Loading your practice sessions...</p>
-            </div>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <Loader className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
+            <p className="text-gray-600">Loading your practice sessions...</p>
           </div>
-        )}
-      </DashboardLayout>
+        </div>
+
     );
   }
 
   // Error state
   if (error) {
     return (
-      <DashboardLayout>
-        {() => (
+    
+     
           <div className="flex items-center justify-center min-h-[60vh]">
             <div className="text-center">
               <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
@@ -193,14 +198,11 @@ export default function ContinuePractice() {
               </Button>
             </div>
           </div>
-        )}
-      </DashboardLayout>
+
     );
   }
 
   return (
-    <DashboardLayout>
-      {(user) => (
         <div>
           {/* Header */}
           <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
@@ -209,7 +211,7 @@ export default function ContinuePractice() {
                 Continue Practice
               </h1>
               <p className="text-gray-600">
-                Pick up where you left off, {user.first_name}! Resume your
+                Pick up where you left off, {user?.first_name}! Resume your
                 incomplete practice sessions.
               </p>
             </div>
@@ -236,7 +238,7 @@ export default function ContinuePractice() {
             </div>
           </div>
 
-          <div className="flex">          
+          <div className="flex">
             <div className="flex-1 p-6 bg-gray-50">
               {/* Stats Overview */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -332,7 +334,8 @@ export default function ContinuePractice() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                       {activeSessions.map((session) => {
-                        const completedQuestions = getCompletedQuestions(session);
+                        const completedQuestions =
+                          getCompletedQuestions(session);
                         const progressPercentage = calculatePercentage(
                           completedQuestions,
                           session.total_questions
@@ -376,7 +379,10 @@ export default function ContinuePractice() {
                                   {progressPercentage}%
                                 </span>
                               </div>
-                              <Progress value={progressPercentage} className="h-2" />
+                              <Progress
+                                value={progressPercentage}
+                                className="h-2"
+                              />
                             </div>
 
                             <div className="flex items-center justify-between text-sm text-gray-600">
@@ -397,7 +403,12 @@ export default function ContinuePractice() {
                                 </span>
                               </div>
                               <span>
-                                Last: {formatLastAccessed(session.last_accessed || session.lastAccessed || '')}
+                                Last:{" "}
+                                {formatLastAccessed(
+                                  session.last_accessed ||
+                                    session.lastAccessed ||
+                                    ""
+                                )}
                               </span>
                             </div>
 
@@ -447,9 +458,12 @@ export default function ContinuePractice() {
                     </CardHeader>
                     <CardContent className="space-y-3">
                       {completedSessions.slice(0, 5).map((session) => {
-                        const subjectName = typeof session.subject === 'string' 
-                          ? session.subject 
-                          : session.subject?.display_name || session.subject?.name || 'Unknown Subject';
+                        const subjectName =
+                          typeof session.subject === "string"
+                            ? session.subject
+                            : session.subject?.display_name ||
+                              session.subject?.name ||
+                              "Unknown Subject";
 
                         return (
                           <div
@@ -466,7 +480,9 @@ export default function ContinuePractice() {
                                 </p>
                               </div>
                               <Badge
-                                className={getDifficultyColor(getDifficulty(session))}
+                                className={getDifficultyColor(
+                                  getDifficulty(session)
+                                )}
                                 variant="secondary"
                               >
                                 {getDifficulty(session)}
@@ -486,7 +502,12 @@ export default function ContinuePractice() {
                               </span>
                             </div>
                             <div className="mt-2 text-xs text-gray-500">
-                              Completed {formatLastAccessed(session.completed_at || session.lastAccessed || '')}
+                              Completed{" "}
+                              {formatLastAccessed(
+                                session.completed_at ||
+                                  session.lastAccessed ||
+                                  ""
+                              )}
                             </div>
                           </div>
                         );
@@ -567,7 +588,7 @@ export default function ContinuePractice() {
                         ) : (
                           <>
                             Great job completing your sessions,{" "}
-                            {user.first_name}! Start a new practice session to
+                            {user?.first_name}! Start a new practice session to
                             continue building your knowledge and maintain your
                             learning streak.
                           </>
@@ -580,7 +601,6 @@ export default function ContinuePractice() {
             </div>
           </div>
         </div>
-      )}
-    </DashboardLayout>
+
   );
 }

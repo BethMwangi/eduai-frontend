@@ -235,7 +235,7 @@ export default function StudentDashboard() {
 
   return (
     <DashboardLayout>
-      {(layoutUser) => (
+
         <div>
           <div className="bg-white border-b border-gray-200 px-6 py-4">
             <div className="flex items-center justify-between">
@@ -244,7 +244,7 @@ export default function StudentDashboard() {
                   Student Dashboard
                 </h1>
                 <p className="text-gray-600">
-                  Welcome back, {layoutUser.first_name}! Ready to learn?
+                  Welcome back, {user?.first_name}! Ready to learn?
                 </p>
               </div>
             </div>
@@ -591,7 +591,7 @@ export default function StudentDashboard() {
             </div>
           </div>
         </div>
-      )}
+  
     </DashboardLayout>
   );
 }

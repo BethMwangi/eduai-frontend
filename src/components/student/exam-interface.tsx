@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { ArrowLeft, ArrowRight, Clock, Flag, CheckCircle, Eye, EyeOff, Lightbulb, BookOpen, Target } from "lucide-react"
-import DashboardLayout from "../dashboard/dashboard-navbar"
 
 interface ExamInterfaceProps {
   examId: string
@@ -17,13 +16,6 @@ export default function ExamInterface({ examId }: ExamInterfaceProps) {
   const [showTips, setShowTips] = useState(false)
   const [timeRemaining, setTimeRemaining] = useState(5400) // 90 minutes in seconds
   const [isSubmitted, setIsSubmitted] = useState(false)
-
-  const user = {
-    name: "Alex Smith",
-    email: "alex.smith@email.com",
-    role: "student",
-    avatar: "AS",
-  }
 
   // Mock exam data
   const exam = {
@@ -142,7 +134,7 @@ export default function ExamInterface({ examId }: ExamInterfaceProps) {
   const unansweredCount = exam.questions.length - answeredCount
 
   return (
-    <DashboardLayout user={user}>
+    <>
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -448,6 +440,6 @@ export default function ExamInterface({ examId }: ExamInterfaceProps) {
           </div>
         </div>
       )}
-    </DashboardLayout>
+    </>
   )
 }
