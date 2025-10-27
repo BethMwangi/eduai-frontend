@@ -131,6 +131,7 @@ export interface ApiQuestion {
   animation_asset_url: string | null;
   created_at: string;
   attempts_count?: number;
+  last_score?: number;
 }
 
 export interface PaginatedResponse<T> {
@@ -481,4 +482,11 @@ export interface ExamPaper {
     options: string[];
     correctAnswer: number;
   }[];
+}
+
+export interface HeroSectionProps {
+  title?: string;
+  description?: string;
+  imageUrl?: string;
+  alt?: string;
 }

@@ -15,13 +15,14 @@ import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/context/auth";
 import { userService } from "@/services/userService";
 import type { ExamPaperTaking, PaperQuestionForTaking } from "@/types/exams";
+import { useParams } from "next/navigation";
 
-type Props = { paperId: string };
 
-export default function ExamTakingInterface({ paperId }: Props) {
+export default function ExamTakingInterface() {
   const router = useRouter();
   const { getValidAccessToken } = useAuth();
-
+  const params = useParams<{ id: string }>();
+  const paperId = params?.id;
   // Remote data
   const [paper, setPaper] = useState<ExamPaperTaking | null>(null);
   const [loading, setLoading] = useState(true);
@@ -35,7 +36,6 @@ export default function ExamTakingInterface({ paperId }: Props) {
 
   // Timer
   const [timeRemaining, setTimeRemaining] = useState(0);
- 
 
   // Load paper from API
   useEffect(() => {
@@ -154,7 +154,7 @@ export default function ExamTakingInterface({ paperId }: Props) {
     });
 
     try {
-      const result = await userService.submitExam(
+      await userService.submitExam(
         getValidAccessToken,
         paper.id,
         formattedAnswers,

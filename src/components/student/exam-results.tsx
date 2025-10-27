@@ -18,9 +18,27 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { userService } from "@/services/userService";
 import { useAuth } from "@/context/auth";
+import { useParams } from "next/navigation";
 
-interface ExamResultsProps {
-  paperId: string;
+interface ExamResultsData {
+  question_results: QuestionResult[];
+  submission: {
+    total_score: number;
+    percentage: number;
+    time_taken_minutes: number;
+  };
+  exam_paper: {
+    total_marks: number;
+    duration_minutes: number;
+    exam: {
+      title: string;
+      year: string;
+    };
+    subject: {
+      display_name: string;
+    };
+    paper_code: string;
+  };
 }
 
 interface QuestionResult {
@@ -29,19 +47,21 @@ interface QuestionResult {
   question_text: string;
   marks: number;
   difficulty: string;
-  user_answer?: number;
+  user_answer?: number | null;
   correct_answer: number;
   is_correct: boolean;
   is_attempted: boolean;
   options: string[];
 }
 
-export default function ExamResults({ paperId }: ExamResultsProps) {
+export default function ExamResults() {
   const router = useRouter();
   const { getValidAccessToken } = useAuth();
+  const params = useParams<{ id: string }>();
+  const paperId = params?.id;
 
-  const [showDetailedResults, setShowDetailedResults] = useState(false);
-  const [examResults, setExamResults] = useState<any>(null);
+  // const [showDetailedResults, setShowDetailedResults] = useState(false);
+  const [examResults, setExamResults] = useState<ExamResultsData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -52,9 +72,10 @@ export default function ExamResults({ paperId }: ExamResultsProps) {
         setLoading(true);
         const data = await userService.getExamResults(
           getValidAccessToken,
-          Number(paperId) 
+          Number(paperId)
         );
-        if (!cancelled) setExamResults(data);
+        if (!cancelled) setExamResults(data as unknown as ExamResultsData);
+        // setExamResults(data);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -72,13 +93,13 @@ export default function ExamResults({ paperId }: ExamResultsProps) {
 
   const totalQuestions = examResults.question_results.length;
   const attemptedQuestions = examResults.question_results.filter(
-    (q: any) => q.is_attempted
+    (q: QuestionResult) => q.is_attempted
   ).length;
   const correctQuestions = examResults.question_results.filter(
-    (q: any) => q.is_correct
+    (q: QuestionResult) => q.is_correct
   ).length;
   const incorrectQuestions = examResults.question_results.filter(
-    (q: any) => q.is_attempted && !q.is_correct
+    (q: QuestionResult) => q.is_attempted && !q.is_correct
   ).length;
   const unattemptedQuestions = totalQuestions - attemptedQuestions;
 

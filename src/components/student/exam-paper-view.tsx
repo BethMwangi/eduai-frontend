@@ -5,7 +5,6 @@ import { useParams } from "next/navigation";
 import {
   ArrowLeft,
   Clock,
-  FileText,
   Play,
   Award,
   Target,
@@ -47,8 +46,8 @@ export default function ExamPaperView() {
           paperIdNum
         );
         if (!cancelled) setPaper(data);
-      } catch (e: any) {
-        if (!cancelled) setErr(e?.message || "Failed to load exam paper.");
+      } catch (error) {
+        console.error("Failed", error);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -83,8 +82,7 @@ export default function ExamPaperView() {
               {!loading && paper && (
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className={`w-16 h-16 ${getExamTypeColor(paper.exam?.exam_type as any)} rounded-xl flex items-center justify-center`}>
-                      <FileText className="w-8 h-8 text-white" />
+                    <div className={`w-16 h-16 ${getExamTypeColor(paper.exam?.exam_type || "")} rounded-xl flex items-center justify-center`}>
                     </div>
                     <div>
                       <h1 className="text-3xl font-bold text-gray-900 mb-2">

@@ -61,10 +61,10 @@ interface Child {
 
 interface ChildDetailViewProps {
   child: Child
-  onBack: () => void
+  onBack?: () => void
 }
 
-export default function ChildDetailView({ child, onBack }: ChildDetailViewProps) {
+export default function ChildDetailView({ child }: ChildDetailViewProps) {
   const [activeTab, setActiveTab] = useState("overview")
 
   const tabs = [

@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
 import {
   Search,
   BookOpen,
@@ -20,11 +19,14 @@ import {
 
 import { useAuth } from "@/context/auth";
 import { userService } from "@/services/userService";
-import type { ApiQuestion, GradeInfo, GradeQuestionsResponse } from "@/types/auth";
+import type {
+  ApiQuestion,
+  GradeInfo,
+  GradeQuestionsResponse,
+} from "@/types/auth";
 import { getDifficultyColor } from "@/utils/colorUtils";
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
-
 
 const DiffIcon = ({ d }: { d: "Easy" | "Medium" | "Hard" | "Unknown" }) => {
   switch (d) {
@@ -49,7 +51,11 @@ const getStatusColor = (status: "correct" | "incorrect" | "not-attempted") => {
       return "bg-gray-300";
   }
 };
-const StatusIcon = ({ s }: { s: "correct" | "incorrect" | "not-attempted" }) => {
+const StatusIcon = ({
+  s,
+}: {
+  s: "correct" | "incorrect" | "not-attempted";
+}) => {
   switch (s) {
     case "correct":
       return <CheckCircle className="w-4 h-4 text-green-600" />;
@@ -60,9 +66,9 @@ const StatusIcon = ({ s }: { s: "correct" | "incorrect" | "not-attempted" }) => 
   }
 };
 
-export default function SubjectQuestionsPage() {
-  const params = useParams<{ id: string }>();
-  const subjectIdFromRoute = params?.id; 
+export default function SubjectQuestions({ subjectId }: { subjectId: string }) {
+  const subjectIdFromRoute = subjectId;
+
   const { getValidAccessToken } = useAuth();
 
   // UI filters
@@ -70,7 +76,7 @@ export default function SubjectQuestionsPage() {
   const [selectedDifficulty, setSelectedDifficulty] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [showFilters, setShowFilters] = useState(true);
+  const [showFilters] = useState(true);
 
   // API state
   const [apiQuestions, setApiQuestions] = useState<ApiQuestion[]>([]);
@@ -80,7 +86,11 @@ export default function SubjectQuestionsPage() {
   // Derived subject label
   const subjectDisplay = useMemo(() => {
     const first = apiQuestions[0];
-    return first?.subject?.display_name || first?.subject?.name || `Subject ${subjectIdFromRoute ?? ""}`;
+    return (
+      first?.subject?.display_name ||
+      first?.subject?.name ||
+      `Subject ${subjectIdFromRoute ?? ""}`
+    );
   }, [apiQuestions, subjectIdFromRoute]);
 
   // Fetch questions for this subject
@@ -91,15 +101,22 @@ export default function SubjectQuestionsPage() {
       if (!getValidAccessToken || !subjectIdFromRoute) return;
       setLoading(true);
       try {
-        const result = await userService.getGradeQuestions(getValidAccessToken, {
-          subject_id: Number(subjectIdFromRoute),
-          // optional difficulty filter if you want server-side filtering:
-          difficulty: selectedDifficulty !== "all"
-            ? (selectedDifficulty.toLowerCase() as "easy" | "medium" | "hard")
-            : undefined,
-          page: 1,
-          page_size: 200, 
-        });
+        const result = await userService.getGradeQuestions(
+          getValidAccessToken,
+          {
+            subject_id: Number(subjectIdFromRoute),
+            // optional difficulty filter if you want server-side filtering:
+            difficulty:
+              selectedDifficulty !== "all"
+                ? (selectedDifficulty.toLowerCase() as
+                    | "easy"
+                    | "medium"
+                    | "hard")
+                : undefined,
+            page: 1,
+            page_size: 200,
+          }
+        );
         const data = result as GradeQuestionsResponse;
         if (cancelled) return;
 
@@ -125,7 +142,8 @@ export default function SubjectQuestionsPage() {
   const allTopics = useMemo(() => {
     const set = new Set<string>();
     apiQuestions.forEach((q) => {
-      const t = q.topic || q.subject?.category_display || q.subject?.name || "General";
+      const t =
+        q.topic || q.subject?.category_display || q.subject?.name || "General";
       set.add(t);
     });
     return Array.from(set).sort((a, b) => a.localeCompare(b));
@@ -147,12 +165,17 @@ export default function SubjectQuestionsPage() {
 
   const uiQuestions: UIQ[] = useMemo(() => {
     return apiQuestions.map((q) => {
-      const topic = q.topic || q.subject?.category_display || q.subject?.name || "General";
-      const diff = q.difficulty ? (cap(q.difficulty) as "Easy" | "Medium" | "Hard") : "Unknown";
-      const attempts = (q as any).attempts_count ?? 0;
-      const lastScore = typeof (q as any).last_score === "number" ? (q as any).last_score : null;
-      let status: "correct" | "incorrect" | "not-attempted" = "not-attempted";
-      if (attempts > 0) status = lastScore === 100 ? "correct" : "incorrect";
+      const topic =
+        q.topic || q.subject?.category_display || q.subject?.name || "General";
+      const diff = q.difficulty
+        ? (cap(q.difficulty) as "Easy" | "Medium" | "Hard")
+        : "Unknown";
+    const attempts = q.attempts_count ?? 0;
+        const lastScore =
+      typeof q.last_score === "number" ? q.last_score : null;
+    let status: "correct" | "incorrect" | "not-attempted" = "not-attempted";
+    if (attempts > 0) status = lastScore === 100 ? "correct" : "incorrect";
+
 
       return {
         id: q.id,
@@ -162,7 +185,9 @@ export default function SubjectQuestionsPage() {
         lastScore,
         status,
         question: q.question_text,
-        tags: [q.subject?.name, q.subject?.category].filter(Boolean) as string[],
+        tags: [q.subject?.name, q.subject?.category].filter(
+          Boolean
+        ) as string[],
         estimatedTime: "3 mins",
         points: 5,
       };
@@ -173,7 +198,9 @@ export default function SubjectQuestionsPage() {
   const filteredQuestions = useMemo(() => {
     return uiQuestions.filter((q) => {
       const topicOk = selectedTopic === "all" || q.topic === selectedTopic;
-      const diffOk = selectedDifficulty === "all" || q.difficulty.toLowerCase() === selectedDifficulty.toLowerCase();
+      const diffOk =
+        selectedDifficulty === "all" ||
+        q.difficulty.toLowerCase() === selectedDifficulty.toLowerCase();
       const statusOk = selectedStatus === "all" || q.status === selectedStatus;
       const searchOk =
         !searchQuery ||
@@ -182,13 +209,23 @@ export default function SubjectQuestionsPage() {
         q.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
       return topicOk && diffOk && statusOk && searchOk;
     });
-  }, [uiQuestions, selectedTopic, selectedDifficulty, selectedStatus, searchQuery]);
+  }, [
+    uiQuestions,
+    selectedTopic,
+    selectedDifficulty,
+    selectedStatus,
+    searchQuery,
+  ]);
 
   // Stats
   const totalQuestions = uiQuestions.length;
   const attemptedQuestions = uiQuestions.filter((q) => q.attempts > 0).length;
-  const correctQuestions = uiQuestions.filter((q) => q.status === "correct").length;
-  const incorrectQuestions = uiQuestions.filter((q) => q.status === "incorrect").length;
+  const correctQuestions = uiQuestions.filter(
+    (q) => q.status === "correct"
+  ).length;
+  const incorrectQuestions = uiQuestions.filter(
+    (q) => q.status === "incorrect"
+  ).length;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -209,7 +246,9 @@ export default function SubjectQuestionsPage() {
               <div className="text-5xl">📘</div>
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">
-                  {subjectDisplay} {gradeInfo?.display_name ? `• ${gradeInfo.display_name}` : ""} Questions
+                  {subjectDisplay}{" "}
+                  {gradeInfo?.display_name ? `• ${gradeInfo.display_name}` : ""}{" "}
+                  Questions
                 </h1>
                 <p className="text-gray-600 mt-1">
                   {filteredQuestions.length} of {totalQuestions} questions
@@ -240,7 +279,9 @@ export default function SubjectQuestionsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Total Questions</p>
-                  <p className="text-2xl font-bold text-gray-900">{totalQuestions}</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {totalQuestions}
+                  </p>
                 </div>
                 <BookOpen className="w-8 h-8 text-blue-500" />
               </div>
@@ -249,7 +290,9 @@ export default function SubjectQuestionsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Attempted</p>
-                  <p className="text-2xl font-bold text-gray-900">{attemptedQuestions}</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {attemptedQuestions}
+                  </p>
                 </div>
                 <Play className="w-8 h-8 text-purple-500" />
               </div>
@@ -258,7 +301,9 @@ export default function SubjectQuestionsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Correct</p>
-                  <p className="text-2xl font-bold text-green-600">{correctQuestions}</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {correctQuestions}
+                  </p>
                 </div>
                 <CheckCircle className="w-8 h-8 text-green-500" />
               </div>
@@ -267,7 +312,9 @@ export default function SubjectQuestionsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Incorrect</p>
-                  <p className="text-2xl font-bold text-red-600">{incorrectQuestions}</p>
+                  <p className="text-2xl font-bold text-red-600">
+                    {incorrectQuestions}
+                  </p>
                 </div>
                 <AlertCircle className="w-8 h-8 text-red-500" />
               </div>
@@ -283,12 +330,16 @@ export default function SubjectQuestionsPage() {
           <div className="w-80 bg-white border-r border-gray-200 p-6">
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Filters</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Filters
+                </h3>
               </div>
 
               {/* Search */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Search
+                </label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
@@ -303,7 +354,9 @@ export default function SubjectQuestionsPage() {
 
               {/* Topic Filter */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Topic</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Topic
+                </label>
                 <select
                   value={selectedTopic}
                   onChange={(e) => setSelectedTopic(e.target.value)}
@@ -320,7 +373,9 @@ export default function SubjectQuestionsPage() {
 
               {/* Difficulty Filter */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Difficulty
+                </label>
                 <select
                   value={selectedDifficulty}
                   onChange={(e) => setSelectedDifficulty(e.target.value)}
@@ -335,7 +390,9 @@ export default function SubjectQuestionsPage() {
 
               {/* Status Filter */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Status
+                </label>
                 <select
                   value={selectedStatus}
                   onChange={(e) => setSelectedStatus(e.target.value)}
@@ -350,7 +407,9 @@ export default function SubjectQuestionsPage() {
 
               {/* Quick Filters */}
               <div>
-                <h4 className="text-sm font-medium text-gray-700 mb-3">Quick Filters</h4>
+                <h4 className="text-sm font-medium text-gray-700 mb-3">
+                  Quick Filters
+                </h4>
                 <div className="space-y-2">
                   <button
                     onClick={() => {
@@ -418,7 +477,11 @@ export default function SubjectQuestionsPage() {
                       <div className="flex items-start gap-4">
                         {/* Status Indicator */}
                         <div className="flex-shrink-0 pt-1">
-                          <div className={`w-3 h-3 rounded-full ${getStatusColor(q.status)}`} />
+                          <div
+                            className={`w-3 h-3 rounded-full ${getStatusColor(
+                              q.status
+                            )}`}
+                          />
                         </div>
 
                         {/* Content */}
@@ -426,12 +489,16 @@ export default function SubjectQuestionsPage() {
                           <div className="flex items-start justify-between mb-3">
                             <div className="flex-1">
                               <div className="flex items-center gap-3 mb-2">
-                                <span className="text-sm font-semibold text-gray-500">Q{q.id}</span>
+                                <span className="text-sm font-semibold text-gray-500">
+                                  Q{q.id}
+                                </span>
                                 <span className="px-3 py-1 bg-blue-50 text-blue-600 text-sm rounded-full font-medium">
                                   {q.topic}
                                 </span>
                                 <span
-                                  className={`px-3 py-1 text-sm rounded-full border flex items-center gap-1 ${getDifficultyColor(q.difficulty)}`}
+                                  className={`px-3 py-1 text-sm rounded-full border flex items-center gap-1 ${getDifficultyColor(
+                                    q.difficulty
+                                  )}`}
                                 >
                                   <DiffIcon d={q.difficulty} />
                                   {q.difficulty}
@@ -439,11 +506,15 @@ export default function SubjectQuestionsPage() {
                                 {q.attempts > 0 && (
                                   <span className="flex items-center gap-1 text-sm text-gray-500">
                                     <StatusIcon s={q.status} />
-                                    {q.status === "correct" ? "Solved" : "Attempted"}
+                                    {q.status === "correct"
+                                      ? "Solved"
+                                      : "Attempted"}
                                   </span>
                                 )}
                               </div>
-                              <h3 className="text-lg font-semibold text-gray-900 mb-3">{q.question}</h3>
+                              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                                {q.question}
+                              </h3>
                               <div className="flex items-center gap-4 text-sm text-gray-500">
                                 <span className="flex items-center gap-1">
                                   <Clock className="w-4 h-4" />
@@ -479,7 +550,9 @@ export default function SubjectQuestionsPage() {
                           {/* Actions */}
                           <div className="flex items-center gap-3">
                             <Link
-                              href={`/student/question/${q.id}/practice?subject_id=${subjectIdFromRoute}${
+                              href={`/student/question/${
+                                q.id
+                              }/practice?subject_id=${subjectIdFromRoute}${
                                 selectedDifficulty !== "all"
                                   ? `&difficulty=${selectedDifficulty.toLowerCase()}`
                                   : ""
@@ -509,8 +582,12 @@ export default function SubjectQuestionsPage() {
                 {filteredQuestions.length === 0 && (
                   <div className="text-center py-12">
                     <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-600 mb-2">No questions found</h3>
-                    <p className="text-gray-500 mb-4">Try adjusting your filters to see more results.</p>
+                    <h3 className="text-lg font-semibold text-gray-600 mb-2">
+                      No questions found
+                    </h3>
+                    <p className="text-gray-500 mb-4">
+                      Try adjusting your filters to see more results.
+                    </p>
                     <button
                       onClick={() => {
                         setSelectedTopic("all");

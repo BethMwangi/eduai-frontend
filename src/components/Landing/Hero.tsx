@@ -16,7 +16,7 @@ const Hero: React.FC<HeroSectionProps> = ({
       <div className="absolute inset-0 z-0">
         <Image
           src={imageUrl || "/placeholder.svg"}
-          alt={alt}
+          alt={alt || "Hero image"}
           fill
           className="object-cover"
           priority

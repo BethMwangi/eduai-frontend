@@ -1,23 +1,26 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import {  User, Bell, Shield, Save, Eye, EyeOff, SettingsIcon, CreditCard , Check, Edit, X} from "lucide-react"
-import DashboardLayout from "./dashboard-layout"
-import ParentSidebar from "./parent-sidebar"
+// import ParentSidebar from "./parent-sidebar"
 
-import type {CustomUser } from "@/types/auth"; // adjust path if needed
+// import { userService } from "@/services/userService";
+
+// import { useAuth } from "@/context/auth";
 
 export default function ParentSettings() {
+    // const { getValidAccessToken } = useAuth();
+
   const [activeTab, setActiveTab] = useState("overview")
   const [isEditing, setIsEditing] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [children, setChildren] = useState([])
-  const [layoutUser, setLayoutUser] = useState<CustomUser | null>(null);
+  // const [loading, setLoading] = useState(false)
+  // const [children, setChildren] = useState([])
 
+  
   const [formData, setFormData] = useState<{
     firstName: string
     lastName: string
@@ -77,19 +80,8 @@ export default function ParentSettings() {
     setIsEditing(false)
     // Reset form data
   }
-  useEffect(() => {
-    if (layoutUser) {
-      setFormData({
-        firstName: layoutUser.first_name || "",
-        lastName: layoutUser.last_name || "",
-        email: layoutUser.email || "",
-        phone: "",
-        address: "",
-      });
-    }
-  }, [layoutUser]);
 
-
+  
   const tabs = [
     { id: "overview", label: "Overview & Profile", icon: User },
     { id: "billing", label: "Plan & Billing", icon: CreditCard },
@@ -99,12 +91,8 @@ export default function ParentSettings() {
   ]
 
   return (
-    <DashboardLayout>
-      {(user) => {
-        if (!layoutUser){
-          setLayoutUser(user as CustomUser);
-        }
-      {/* Header */}
+<>
+
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
@@ -122,7 +110,7 @@ export default function ParentSettings() {
 
       <div className="flex">
         {/* Sidebar */}
-                 <ParentSidebar user={layoutUser} activePage="settings" />
+                 {/* <ParentSidebar user={layoutUser} activePage="settings" /> */}
 
 
         {/* Main Content */}
@@ -758,8 +746,6 @@ export default function ParentSettings() {
           </div>
         </div>
       </div>
-    
-        )}
-    </DashboardLayout>
-  )
+</>
+  );
 }

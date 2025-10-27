@@ -73,6 +73,12 @@ export default function ExamInterface({ examId }: ExamInterfaceProps) {
 
   const currentQuestion = exam.questions[currentQuestionIndex]
 
+  const handleSubmitExam = () => {
+    setIsSubmitted(true)
+    // Here you would typically send the answers to your backend
+    console.log("Exam submitted with answers:", answers)
+  }
+
   // Timer effect
   useEffect(() => {
     if (timeRemaining > 0 && !isSubmitted) {
@@ -81,7 +87,7 @@ export default function ExamInterface({ examId }: ExamInterfaceProps) {
     } else if (timeRemaining === 0) {
       handleSubmitExam()
     }
-  }, [timeRemaining, isSubmitted])
+  }, [timeRemaining, isSubmitted, handleSubmitExam])
 
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600)
@@ -104,12 +110,6 @@ export default function ExamInterface({ examId }: ExamInterfaceProps) {
       newFlagged.add(currentQuestionIndex)
     }
     setFlaggedQuestions(newFlagged)
-  }
-
-  const handleSubmitExam = () => {
-    setIsSubmitted(true)
-    // Here you would typically send the answers to your backend
-    console.log("Exam submitted with answers:", answers)
   }
 
   const getQuestionStatus = (index: number) => {

@@ -110,8 +110,8 @@ function SubjectProgressContent({ subject }: SubjectProgressProps) {
         if (!foundSubject) {
           console.error(`❌ Subject "${subject}" not found`);
           const gradeName =
-            studentProfile.grade?.display_name ||
-            studentProfile.grade?.name ||
+            // studentProfile.grade?.display_name ||
+            // studentProfile.grade?.name ||
             gradeId;
           setError(`Subject "${subject}" not found for Grade ${gradeName}`);
           return;
@@ -133,7 +133,7 @@ function SubjectProgressContent({ subject }: SubjectProgressProps) {
 
           setSubjectProgress(progressData.subject_progress);
           setTopicProgress(progressData.topic_progress || []);
-        } catch (progressError: any) {
+        } catch (progressError) {
           console.warn(
             "⚠️ Progress API failed, creating fallback data:",
             progressError
@@ -159,9 +159,9 @@ function SubjectProgressContent({ subject }: SubjectProgressProps) {
           setSubjectProgress(fallbackSubjectProgress);
           setTopicProgress([]);
         }
-      } catch (err: any) {
+      } catch (err) {
         console.error("❌ Failed to fetch subject data:", err);
-        setError(`Failed to load subject data: ${err.message}`);
+        // setError(`Failed to load subject data: ${err.message}`);
       } finally {
         setLoading(false);
       }

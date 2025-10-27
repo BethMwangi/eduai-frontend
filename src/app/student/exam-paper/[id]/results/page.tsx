@@ -1,12 +1,11 @@
 import ExamResults from "@/components/student/exam-results";
 import DashboardLayout from "@/components/dashboard/dashboard-layout";
 
-type Params = { id: string };
 
-export default function ExamResultsPage({ params }: { params: Params }) {
+export default function ExamResultsPage() {
   return (
     <DashboardLayout>
-      <ExamResults paperId={params.id} />
+      <ExamResults />
     </DashboardLayout>
   );
 }

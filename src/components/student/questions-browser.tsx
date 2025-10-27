@@ -183,10 +183,10 @@ export default function QuestionsBrowser() {
   ];
 
   const filteredQuestions = questions.filter((question) => {
-    const topicList =
-      selectedSubject !== "all"
-        ? topics[selectedSubject as keyof typeof topics] || []
-        : [];
+    // const topicList =
+    //   selectedSubject !== "all"
+    //     ? topics[selectedSubject as keyof typeof topics] || []
+    //     : [];
     return (
       (selectedSubject === "all" || question.subject === selectedSubject) &&
       (selectedDifficulty === "all" ||

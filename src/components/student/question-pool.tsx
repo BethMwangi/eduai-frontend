@@ -30,23 +30,21 @@ export default function QuestionPool() {
   // existing state you already had
   const [viewMode, setViewMode] = useState<"list" | "cards">("cards"); // default to cards now
 
-  const [selectedSubject, setSelectedSubject] = useState("all");
-  const [selectedDifficulty, setSelectedDifficulty] = useState("all");
+  const [selectedSubject] = useState("all");
+  const [selectedDifficulty] = useState("all");
 
   const [searchQuery, setSearchQuery] = useState("");
 
   const [apiQuestions, setApiQuestions] = useState<ApiQuestion[]>([]);
   const [gradeInfo, setGradeInfo] = useState<GradeInfo | null>(null);
   const [loading, setLoading] = useState(false);
-  const [totalCount, setTotalCount] = useState(0);
-  const [hasNextPage, setHasNextPage] = useState(false);
-  const [hasPrevPage, setHasPrevPage] = useState(false);
+  const [, setTotalCount] = useState(0);
+  const [, setHasNextPage] = useState(false);
+  const [, setHasPrevPage] = useState(false);
 
-  const [allSubjectsRaw, setAllSubjectsRaw] = useState<Subject[]>([]);
+  const [, setAllSubjectsRaw] = useState<Subject[]>([]);
   const [subjectsMaster, setSubjectsMaster] = useState<Subject[]>([]);
   const [subjectsLoading, setSubjectsLoading] = useState(false);
-
-
 
   // NEW: UI state for subject-grid paging
   const [currentPage, setCurrentPage] = useState(1);
@@ -69,7 +67,8 @@ export default function QuestionPool() {
 
         if (!cancelled) {
           const sorted = [...(data ?? [])].sort((a, b) => {
-            if (a.is_compulsory !== b.is_compulsory) return a.is_compulsory ? -1 : 1;
+            if (a.is_compulsory !== b.is_compulsory)
+              return a.is_compulsory ? -1 : 1;
             const cat = a.category_display.localeCompare(b.category_display);
             if (cat !== 0) return cat;
             const name = a.display_name.localeCompare(b.display_name);
@@ -113,8 +112,8 @@ export default function QuestionPool() {
       const result = await userService.getGradeQuestions(getValidAccessToken, {
         subject_id: subjectId,
         difficulty,
-        page: currentPage, 
-        page_size: 50,     
+        page: currentPage,
+        page_size: 50,
       });
 
       const data = result as GradeQuestionsResponse;
@@ -145,13 +144,17 @@ export default function QuestionPool() {
   /* -------------------- aggregate per-subject view from API data -------------------- */
   type SubjectCard = {
     id: number;
-    name: string;         
-    icon: string;         
+    name: string;
+    icon: string;
     totalQuestions: number;
-    topics: { name: string; questions: number; difficulty: "Easy"|"Medium"|"Hard" }[];
-    completedQuestions: number;   // from attempts_count
-    averageScore?: number;        // from last_score if present
-    lastAttempted?: string;       // optional (not available → omit)
+    topics: {
+      name: string;
+      questions: number;
+      difficulty: "Easy" | "Medium" | "Hard";
+    }[];
+    completedQuestions: number; // from attempts_count
+    averageScore?: number; // from last_score if present
+    lastAttempted?: string; // optional (not available → omit)
   };
 
   const toUiDifficulty = (d?: string) =>
@@ -161,7 +164,7 @@ export default function QuestionPool() {
       ? "Medium"
       : (d ?? "").toLowerCase() === "hard"
       ? "Hard"
-      : "Medium" as const;
+      : ("Medium" as const);
 
   // Build a map from subject id -> aggregated info from questions
   const subjectAgg = useMemo(() => {
@@ -171,7 +174,13 @@ export default function QuestionPool() {
       total: number;
       completed: number;
       scores: number[];
-      topics: Record<string, { count: number; difficultyVotes: Record<"Easy"|"Medium"|"Hard", number> }>;
+      topics: Record<
+        string,
+        {
+          count: number;
+          difficultyVotes: Record<"Easy" | "Medium" | "Hard", number>;
+        }
+      >;
     };
     const map = new Map<number, Agg>();
 
@@ -204,14 +213,15 @@ export default function QuestionPool() {
       const entry = map.get(sid)!;
       entry.total += 1;
 
-      const attempts = (q as any).attempts_count ?? 0;
+      const attempts = q.attempts_count ?? 0;
       if (attempts > 0) {
         entry.completed += 1;
-        const ls = (q as any).last_score;
+        const ls = q.last_score;
         if (typeof ls === "number") entry.scores.push(ls);
       }
 
-      const topicName = q.topic || q.subject?.category_display || q.subject?.name || "General";
+      const topicName =
+        q.topic || q.subject?.category_display || q.subject?.name || "General";
       const dUi = toUiDifficulty(q.difficulty);
       if (!entry.topics[topicName]) {
         entry.topics[topicName] = {
@@ -233,22 +243,25 @@ export default function QuestionPool() {
       const totalFromAgg = agg?.total ?? 0;
 
       // derive topics list (top 4 by count)
-      const topicsArray =
-        agg
-          ? Object.entries(agg.topics)
-              .map(([name, t]) => {
-                const diff = (["Hard", "Medium", "Easy"] as const).reduce((best, cur) =>
-                  t.difficultyVotes[cur] > t.difficultyVotes[best] ? cur : best
-                , "Easy" as "Easy"|"Medium"|"Hard");
-                return { name, questions: t.count, difficulty: diff };
-              })
-              .sort((a, b) => b.questions - a.questions)
-              .slice(0, 4)
-          : [];
+      const topicsArray = agg
+        ? Object.entries(agg.topics)
+            .map(([name, t]) => {
+              const diff = (["Hard", "Medium", "Easy"] as const).reduce(
+                (best, cur) =>
+                  t.difficultyVotes[cur] > t.difficultyVotes[best] ? cur : best,
+                "Easy" as "Easy" | "Medium" | "Hard"
+              );
+              return { name, questions: t.count, difficulty: diff };
+            })
+            .sort((a, b) => b.questions - a.questions)
+            .slice(0, 4)
+        : [];
 
       const avg =
         agg && agg.scores.length > 0
-          ? Math.round(agg.scores.reduce((a, b) => a + b, 0) / agg.scores.length)
+          ? Math.round(
+              agg.scores.reduce((a, b) => a + b, 0) / agg.scores.length
+            )
           : undefined;
 
       return {
@@ -268,9 +281,11 @@ export default function QuestionPool() {
       if (!subjectsMaster.find((s) => s.id === sid)) {
         const topicsArray = Object.entries(agg.topics)
           .map(([name, t]) => {
-            const diff = (["Hard", "Medium", "Easy"] as const).reduce((best, cur) =>
-              t.difficultyVotes[cur] > t.difficultyVotes[best] ? cur : best
-            , "Easy" as "Easy"|"Medium"|"Hard");
+            const diff = (["Hard", "Medium", "Easy"] as const).reduce(
+              (best, cur) =>
+                t.difficultyVotes[cur] > t.difficultyVotes[best] ? cur : best,
+              "Easy" as "Easy" | "Medium" | "Hard"
+            );
             return { name, questions: t.count, difficulty: diff };
           })
           .sort((a, b) => b.questions - a.questions)
@@ -278,7 +293,9 @@ export default function QuestionPool() {
 
         const avg =
           agg.scores.length > 0
-            ? Math.round(agg.scores.reduce((a, b) => a + b, 0) / agg.scores.length)
+            ? Math.round(
+                agg.scores.reduce((a, b) => a + b, 0) / agg.scores.length
+              )
             : undefined;
 
         cards.push({
@@ -305,7 +322,10 @@ export default function QuestionPool() {
   // paging
   const totalPages = Math.max(1, Math.ceil(subjectCards.length / itemsPerPage));
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentSubjects = subjectCards.slice(startIndex, startIndex + itemsPerPage);
+  const currentSubjects = subjectCards.slice(
+    startIndex,
+    startIndex + itemsPerPage
+  );
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -332,18 +352,24 @@ export default function QuestionPool() {
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold text-gray-900">Question Pool</h1>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Question Pool
+              </h1>
               <div className="flex items-center bg-gray-100 rounded-lg p-1">
                 <button
                   onClick={() => setViewMode("cards")}
-                  className={`p-2 rounded ${viewMode === "cards" ? "bg-white shadow-sm" : ""}`}
+                  className={`p-2 rounded ${
+                    viewMode === "cards" ? "bg-white shadow-sm" : ""
+                  }`}
                   title="Cards"
                 >
                   <Grid3X3 className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => setViewMode("list")}
-                  className={`p-2 rounded ${viewMode === "list" ? "bg-white shadow-sm" : ""}`}
+                  className={`p-2 rounded ${
+                    viewMode === "list" ? "bg-white shadow-sm" : ""
+                  }`}
                   title="List"
                 >
                   <List className="w-4 h-4" />
@@ -378,7 +404,9 @@ export default function QuestionPool() {
             <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 rounded-lg border border-gray-200">
               <BookOpen className="w-5 h-5 text-gray-600" />
               <span className="text-sm font-medium text-gray-700">
-                {subjectsLoading ? "Loading…" : `${subjectCards.length} Subjects`}
+                {subjectsLoading
+                  ? "Loading…"
+                  : `${subjectCards.length} Subjects`}
               </span>
             </div>
           </div>
@@ -393,7 +421,9 @@ export default function QuestionPool() {
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 {loading && currentSubjects.length === 0 && (
-                  <div className="col-span-full text-center text-gray-500 py-16">Loading…</div>
+                  <div className="col-span-full text-center text-gray-500 py-16">
+                    Loading…
+                  </div>
                 )}
 
                 {!loading &&
@@ -408,10 +438,14 @@ export default function QuestionPool() {
                           <div className="flex items-center gap-3">
                             <div className="text-4xl">{subject.icon}</div>
                             <div>
-                              <h3 className="text-xl font-bold text-gray-900">{subject.name}</h3>
+                              <h3 className="text-xl font-bold text-gray-900">
+                                {subject.name}
+                              </h3>
                               <p className="text-sm text-gray-600">
                                 {subject.totalQuestions} questions
-                                {gradeInfo?.display_name ? ` • ${gradeInfo.display_name}` : ""}
+                                {gradeInfo?.display_name
+                                  ? ` • ${gradeInfo.display_name}`
+                                  : ""}
                               </p>
                             </div>
                           </div>
@@ -422,7 +456,11 @@ export default function QuestionPool() {
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-gray-600">Your Progress</span>
                             <span className="font-semibold text-blue-600">
-                              {getProgressPercentage(subject.completedQuestions, subject.totalQuestions)}%
+                              {getProgressPercentage(
+                                subject.completedQuestions,
+                                subject.totalQuestions
+                              )}
+                              %
                             </span>
                           </div>
                           <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -438,9 +476,12 @@ export default function QuestionPool() {
                           </div>
                           <div className="flex items-center justify-between text-xs text-gray-500">
                             <span>
-                              {subject.completedQuestions} / {subject.totalQuestions} completed
+                              {subject.completedQuestions} /{" "}
+                              {subject.totalQuestions} completed
                             </span>
-                            {subject.averageScore != null && <span>Avg: {subject.averageScore}%</span>}
+                            {subject.averageScore != null && (
+                              <span>Avg: {subject.averageScore}%</span>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -453,19 +494,29 @@ export default function QuestionPool() {
                         </h4>
                         <div className="space-y-2 mb-4">
                           {subject.topics.length === 0 && (
-                            <div className="text-sm text-gray-500">No topic breakdown yet.</div>
+                            <div className="text-sm text-gray-500">
+                              No topic breakdown yet.
+                            </div>
                           )}
                           {subject.topics.map((topic, index) => (
                             <div
                               key={`${topic.name}-${index}`}
                               className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition-colors"
                             >
-                              <span className="text-sm text-gray-700">{topic.name}</span>
+                              <span className="text-sm text-gray-700">
+                                {topic.name}
+                              </span>
                               <div className="flex items-center gap-2">
-                                <span className={`px-2 py-0.5 text-xs rounded-full ${getDifficultyColor(topic.difficulty)}`}>
+                                <span
+                                  className={`px-2 py-0.5 text-xs rounded-full ${getDifficultyColor(
+                                    topic.difficulty
+                                  )}`}
+                                >
                                   {topic.difficulty}
                                 </span>
-                                <span className="text-xs text-gray-500">{topic.questions}Q</span>
+                                <span className="text-xs text-gray-500">
+                                  {topic.questions}Q
+                                </span>
                               </div>
                             </div>
                           ))}
@@ -491,7 +542,9 @@ export default function QuestionPool() {
                         {/* Last attempted (optional) */}
                         <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-2 text-xs text-gray-500">
                           <Clock className="w-3 h-3" />
-                          {subject.lastAttempted ? `Last attempted ${subject.lastAttempted}` : `Keep practicing!`}
+                          {subject.lastAttempted
+                            ? `Last attempted ${subject.lastAttempted}`
+                            : `Keep practicing!`}
                         </div>
                       </div>
                     </div>
@@ -511,23 +564,27 @@ export default function QuestionPool() {
                   </button>
 
                   <div className="flex items-center gap-2">
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                      <button
-                        key={page}
-                        onClick={() => setCurrentPage(page)}
-                        className={`w-10 h-10 rounded-lg font-medium transition-colors ${
-                          currentPage === page
-                            ? "bg-blue-600 text-white"
-                            : "border border-gray-200 text-gray-700 hover:bg-gray-50"
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    ))}
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                      (page) => (
+                        <button
+                          key={page}
+                          onClick={() => setCurrentPage(page)}
+                          className={`w-10 h-10 rounded-lg font-medium transition-colors ${
+                            currentPage === page
+                              ? "bg-blue-600 text-white"
+                              : "border border-gray-200 text-gray-700 hover:bg-gray-50"
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      )
+                    )}
                   </div>
 
                   <button
-                    onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(p + 1, totalPages))
+                    }
                     disabled={currentPage === totalPages}
                     className="flex items-center gap-1 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -541,15 +598,21 @@ export default function QuestionPool() {
               {!loading && subjectCards.length === 0 && (
                 <div className="text-center py-12">
                   <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-600 mb-2">No subjects found</h3>
-                  <p className="text-gray-500">Try adjusting your search query.</p>
+                  <h3 className="text-lg font-semibold text-gray-600 mb-2">
+                    No subjects found
+                  </h3>
+                  <p className="text-gray-500">
+                    Try adjusting your search query.
+                  </p>
                 </div>
               )}
             </>
           ) : (
             // If you still want the old list view of questions, you can keep it here,
             // but since you asked to switch to the new design, the default is "cards".
-            <div className="text-center py-12 text-gray-500">List view coming from your previous template.</div>
+            <div className="text-center py-12 text-gray-500">
+              List view coming from your previous template.
+            </div>
           )}
         </div>
       </div>

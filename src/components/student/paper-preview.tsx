@@ -7,13 +7,13 @@ interface PaperPreviewProps {
   paperId: string
 }
 
-export default function PaperPreview({ paperId }: PaperPreviewProps) {
-  const user = {
-    name: "Alex Smith",
-    email: "alex.smith@email.com",
-    role: "student",
-    avatar: "AS",
-  }
+export default function PaperPreview({  }: PaperPreviewProps) {
+  // const user = {
+  //   name: "Alex Smith",
+  //   email: "alex.smith@email.com",
+  //   role: "student",
+  //   avatar: "AS",
+  // }
 
   // Mock data - in real app, fetch based on paperId
   const paper = {

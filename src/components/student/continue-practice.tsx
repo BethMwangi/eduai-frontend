@@ -39,7 +39,7 @@ import { getDifficultyColor, getScoreColor } from "@/utils/colorUtils";
 
 export default function ContinuePractice() {
   const { getValidAccessToken, user } = useAuth();
-  const [selectedSession, setSelectedSession] = useState<string | null>(null);
+  const [, setSelectedSession] = useState<string | null>(null);
   const [activeSessions, setActiveSessions] = useState<PracticeSession[]>([]);
   const [completedSessions, setCompletedSessions] = useState<
     CompletedPracticeSession[]

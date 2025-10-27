@@ -13,12 +13,15 @@ import {
   CheckCircle,
   Edit,
 } from "lucide-react";
-import DashboardLayout from "./dashboard-layout";
-
+// import { useAuth } from "@/context/auth";
 export default function TeacherDashboard() {
   //   const [activeTab, setActiveTab] = useState("overview")
-
-
+  // const {
+  //   // getValidAccessToken,
+  //   user: layoutUser,
+  //   // loading: authLoading,
+  // } = useAuth();
+  // const [loading, setLoading] = useState(false);
 
   const stats = {
     totalExams: 24,
@@ -65,7 +68,6 @@ export default function TeacherDashboard() {
   ];
 
   return (
-    <DashboardLayout>
    
         <>
           {/* Header */}
@@ -104,7 +106,7 @@ export default function TeacherDashboard() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-text">
-                      {layoutUser.first_name}
+                      {/* {layoutUser.first_name} */}
                     </h3>
                     <p className="text-sm text-gray-500">Mathematics Teacher</p>
                   </div>
@@ -349,6 +351,5 @@ export default function TeacherDashboard() {
           </div>
         </>
 
-    </DashboardLayout>
   );
 }

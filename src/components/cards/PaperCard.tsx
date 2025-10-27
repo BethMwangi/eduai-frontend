@@ -1,6 +1,6 @@
 import { BookOpen, Clock, Star, Play, Eye } from "lucide-react";
 import Link from "next/link";
-
+import type { ReactElement } from "react";
 interface PaperItemProps {
   paper: {
     id: number;
@@ -17,23 +17,30 @@ interface PaperItemProps {
   };
   layoutMode: "list" | "grid";
   getDifficultyColor: (difficulty: string) => string;
-  getTypeIcon: (type: string) => JSX.Element;
+  getTypeIcon: (type: string) => ReactElement;
 }
 
-export function PaperCard({ paper, layoutMode, getDifficultyColor, getTypeIcon }: PaperItemProps) {
+export function PaperCard({
+  paper,
+  layoutMode,
+  getDifficultyColor,
+  getTypeIcon,
+}: PaperItemProps) {
   if (layoutMode === "list") {
     return (
       <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
         <div className="flex items-center gap-4 flex-1">
           <div className="flex items-center gap-2">
             {getTypeIcon(paper.type)}
-            <span className="font-medium text-text">
-              {paper.title}
-            </span>
+            <span className="font-medium text-text">{paper.title}</span>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className={`px-2 py-1 text-xs rounded-full ${getDifficultyColor(paper.difficulty)}`}>
+            <span
+              className={`px-2 py-1 text-xs rounded-full ${getDifficultyColor(
+                paper.difficulty
+              )}`}
+            >
               {paper.difficulty}
             </span>
             <span className="px-2 py-1 bg-gray-200 text-gray-600 text-xs rounded-full">
@@ -94,7 +101,11 @@ export function PaperCard({ paper, layoutMode, getDifficultyColor, getTypeIcon }
           </p>
 
           <div className="flex items-center gap-1 mb-2">
-            <span className={`px-2 py-0.5 text-xs rounded-full ${getDifficultyColor(paper.difficulty)}`}>
+            <span
+              className={`px-2 py-0.5 text-xs rounded-full ${getDifficultyColor(
+                paper.difficulty
+              )}`}
+            >
               {paper.difficulty}
             </span>
             <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
@@ -104,9 +115,7 @@ export function PaperCard({ paper, layoutMode, getDifficultyColor, getTypeIcon }
         </div>
         {paper.attempts > 0 && (
           <div className="text-right text-xs">
-            <span className="text-accent font-medium">
-              {paper.lastScore}%
-            </span>
+            <span className="text-accent font-medium">{paper.lastScore}%</span>
           </div>
         )}
       </div>
