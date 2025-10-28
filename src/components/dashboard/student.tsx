@@ -12,7 +12,6 @@ import {
   Loader,
   FileText,
 } from "lucide-react";
-import DashboardLayout from "./dashboard-layout";
 import { IconComponentCard } from "../cards/IconComponentCard";
 import { SubjectProgressData } from "@/types/auth";
 import { userService } from "@/services/userService";
@@ -234,7 +233,6 @@ export default function StudentDashboard() {
   ];
 
   return (
-    <DashboardLayout>
 
         <div>
           <div className="bg-white border-b border-gray-200 px-6 py-4">
@@ -592,6 +590,5 @@ export default function StudentDashboard() {
           </div>
         </div>
   
-    </DashboardLayout>
   );
 }

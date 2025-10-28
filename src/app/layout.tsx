@@ -1,26 +1,24 @@
-import type { Metadata } from "next";
-import { Noto_Sans } from "next/font/google";
+// src/app/layout.tsx
 import "./globals.css";
-import Providers from "@/components/providers";
-
-const noto = Noto_Sans({ subsets: ["latin"] });
+import type { Metadata } from "next";
+import { AuthProvider } from "@/context/auth";
+import Footer from "@/components/common/Footer";
 
 export const metadata: Metadata = {
-  title: "ExamSuccess - Turn your exams into success stories",
-  description: "AI-powered assessment platform for students",
+  title: "EduPlatform",
+  description: "AI-powered assessment platform",
 };
 
-export default function RootLayout({
-  children
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang='en'>
-      <body className={noto.className} suppressHydrationWarning={true}>
-        <Providers>
-          {children}
-        </Providers>
+    <html lang="en">
+      <body>
+        <AuthProvider>
+          <div className="flex min-h-screen flex-col">
+            <div className="flex-1">{children}</div>
+            <Footer />
+          </div>
+        </AuthProvider>
       </body>
     </html>
   );

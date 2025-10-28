@@ -3,10 +3,8 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth";
 import Hero from "@/components/Landing/Hero";
-import heroPic from "../../public/hero.jpg";
-import Footer from "@/components/common/Footer";
+import heroPic from "../../../public/hero.jpg";
 import SubjectsSection from "@/components/Subjects-section";
-import Navbar from "@/components/common/Navbar";
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -22,7 +20,6 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-        <Navbar />
       <main className="flex flex-col w-full bg-gradient-to-b from-[#F9FAFB] to-[#D2D6DB]">
         <Hero
           title=" Turn your exams into success stories."
@@ -32,7 +29,6 @@ export default function HomePage() {
         />
       </main>
       <SubjectsSection />
-      <Footer />
     </div>
   );
 }
