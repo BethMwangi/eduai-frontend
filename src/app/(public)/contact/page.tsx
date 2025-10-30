@@ -95,8 +95,8 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900">Phone</h3>
-                    <p className="text-gray-600">+1 (555) 123-4567</p>
-                    <p className="text-gray-600">+1 (555) 987-6543</p>
+                    <p className="text-gray-600">+254 (07) 123-4567</p>
+                    <p className="text-gray-600">+254 (07) 987-6543</p>
                   </div>
                 </div>
 
@@ -109,9 +109,7 @@ export default function ContactPage() {
                     <p className="text-gray-600">
                       123 Education Street
                       <br />
-                      Learning City, LC 12345
-                      <br />
-                      United States
+                      Nairobi Kenya{" "}
                     </p>
                   </div>
                 </div>
@@ -148,7 +146,7 @@ export default function ContactPage() {
                     Help Center
                   </a>
                   <a
-                    href="/faq"
+                    href="#faq"
                     className="block text-[#182b5c] hover:text-[#ff914d] transition"
                   >
                     Frequently Asked Questions
@@ -317,7 +315,7 @@ export default function ContactPage() {
 
         {/* FAQ Section */}
         <div className="mt-16">
-          <div className="text-center mb-12">
+          <div id="faq" className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
               Frequently Asked Questions
             </h2>
