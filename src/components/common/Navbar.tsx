@@ -8,8 +8,8 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 const publicMenuItems = [
-  { title: "Products", href: "/products" },
-  { title: "Use Cases", href: "/use-cases" },
+  // { title: "Products", href: "/" },
+  // { title: "Use Cases", href: "/" },
   { title: "Blog", href: "/blog" },
   { title: "About", href: "/about" },
   { title: "Contact", href: "/contact" },

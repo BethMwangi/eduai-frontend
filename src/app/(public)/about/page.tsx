@@ -2,39 +2,10 @@
 
 import type React from "react";
 import { Button } from "@/components/common/Button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent,  CardHeader, CardTitle } from "@/components/ui/card"
 import { BookOpen, Users, Award, Target, Zap, Heart } from "lucide-react"
 import Link from "next/link";
-const teamMembers = [
-  {
-    id: 1,
-    name: "Dr. Rajesh Kumar",
-    role: "Founder & CEO",
-    bio: "Education innovator with 15+ years of experience in EdTech",
-    image: "/professional-man-headshot.png",
-  },
-  {
-    id: 2,
-    name: "Priya Sharma",
-    role: "Head of Curriculum",
-    bio: "Expert in curriculum design and educational content development",
-    image: "/professional-woman-headshot.png",
-  },
-  {
-    id: 3,
-    name: "Amit Patel",
-    role: "CTO",
-    bio: "Technology leader specializing in educational platforms",
-    image: "/professional-headshot-man-tech.jpg",
-  },
-  {
-    id: 4,
-    name: "Neha Gupta",
-    role: "Head of Student Success",
-    bio: "Passionate about student outcomes and learning excellence",
-    image: "/professional-headshot-woman-success.jpg",
-  },
-]
+
 
 const values = [
   {
@@ -99,9 +70,9 @@ export default function AboutPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="py-16 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+      <section className="py-16 bg-gradient-to-r  bg-red-500 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">About EduPlatform</h1>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">About StudyPool</h1>
           <p className="text-xl text-blue-100 max-w-2xl mx-auto">
             Transforming education through innovative technology and comprehensive learning solutions.
           </p>
@@ -112,9 +83,9 @@ export default function AboutPage() {
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-            <Card className="border-0 shadow-lg">
+            <Card className="border-0 shadow-lg bg-white rounded-lg">
               <CardHeader>
-                <CardTitle className="text-2xl text-blue-600">Our Mission</CardTitle>
+                <CardTitle className="text-2xl text-gray-900">Our Mission</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-700 leading-relaxed">
@@ -125,9 +96,9 @@ export default function AboutPage() {
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-lg">
+            <Card className="border-0 shadow-lg bg-white rounded-lg">
               <CardHeader>
-                <CardTitle className="text-2xl text-indigo-600">Our Vision</CardTitle>
+                <CardTitle className="text-2xl text-gray-900">Our Vision</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-700 leading-relaxed">
@@ -169,7 +140,7 @@ export default function AboutPage() {
       </section>
 
       {/* Team Section */}
-      <section className="py-16">
+      {/* <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">Meet Our Team</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -193,7 +164,7 @@ export default function AboutPage() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Stats Section */}
       <section className="py-16 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
@@ -241,83 +212,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center mb-4">
-                <BookOpen className="h-8 w-8 text-blue-400" />
-                <span className="ml-2 text-xl font-bold">EduPlatform</span>
-              </div>
-              <p className="text-gray-400">Empowering students with comprehensive learning tools and resources.</p>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
-              <ul className="space-y-2">
-                <li>
-                  <Link href="/" className="text-gray-400 hover:text-white">
-                    Home
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/about" className="text-gray-400 hover:text-white">
-                    About Us
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/blog" className="text-gray-400 hover:text-white">
-                    Blog
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Features</h3>
-              <ul className="space-y-2">
-                <li>
-                  <Link href="/dashboard/student" className="text-gray-400 hover:text-white">
-                    Student Dashboard
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/student/question-pool" className="text-gray-400 hover:text-white">
-                    Question Pool
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/student/achievements" className="text-gray-400 hover:text-white">
-                    Achievements
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Support</h3>
-              <ul className="space-y-2">
-                <li>
-                  <Link href="/contact" className="text-gray-400 hover:text-white">
-                    Contact Us
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/login" className="text-gray-400 hover:text-white">
-                    Login
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/register" className="text-gray-400 hover:text-white">
-                    Register
-                  </Link>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center">
-            <p className="text-gray-400">&copy; 2025 EduPlatform. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+    
     </div>
   )
 }
